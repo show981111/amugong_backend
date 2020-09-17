@@ -21,4 +21,7 @@ router.post('/register', userController.checkRegisterInput, userController.regis
 
 router.post('/login',userController.checkLoginInput, userController.loginUser)
 
+router.post('/reset', userController.reset_password)
+
+
 module.exports = router;

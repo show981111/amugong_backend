@@ -81,6 +81,29 @@ var getUserInfoByID = function(req, res){
 	
 }
 
+let isVerified = function(userID){
+	var sql = 'SELECT isVerified, issuedAt FROM TEMPUSER WHERE userEmail = ?';
+	console.log(userID);
+	return new Promise(function(resolve, reject){
+		db.query(sql, [userID], function(err, results, fields){
+			if(err) throw err;
+			console.log(results);
+			if(results.length > 0){
+				var current_time = moment().unix()
+
+				console.log(current_time - results[0].issuedAt );
+				if(results[0].isVerified == 1 && current_time - results[0].issuedAt < 180 ){
+					resolve("verified")
+				}else{
+					reject("Forbidden");
+				}
+			}else{
+				reject("Not found");
+			}
+		});
+	})
+}
+
 let cryptoPassword = function(userPassword, salt){
 	
 	return new Promise(function(resolve, reject){
@@ -99,7 +122,13 @@ let cryptoPassword = function(userPassword, salt){
 
 let registerUser = async function(req, res){
 
-	console.log(req.body);
+	try{
+		var verification_result = await isVerified(req.body.userID);
+	}catch(err){
+		res.status(403).send(err);
+		return false;
+	}
+	
 	var salt;
 	var hashedPW;
 	try{
@@ -156,31 +185,39 @@ let verifyPassword = function(userID, inputPassword){
 
 let signJWT = function(userInfo){
 	return new Promise((resolve, reject) => {
-			jwt.sign({
-				    userID: userInfo.userID,
-				    userName: userInfo.name,
-				    iat : moment().unix()
-				}, 
-				secret_key, 
-				{
-		            expiresIn: '90d',
-		            issuer: 'amugong',
-		            subject: 'userInfo',
-		        }, 
-				function(err, token) {
-					if(err) reject(err);
-				  	//console.log(token);
-				  	resolve(token)
-				}
-			)
-		}
-	)
+		var current_time = moment().unix()
+		jwt.sign({
+			    userID: userInfo.userID,
+			    userName: userInfo.name,
+			    iat : current_time
+			}, 
+			secret_key, 
+			{
+	            expiresIn: '90d',
+	            issuer: 'amugong',
+	            subject: 'userInfo',
+	        }, 
+			function(err, token) {
+				if(err) reject(err);
+			  	//console.log(token);
+			  	//여기서 Iat을 DB에 꽂아주기! 
+			  	var sql = 'UPDATE USER SET issuedAt = ? WHERE userID = ?';
+			  	db.query(sql, [current_time,userInfo.userID], function(error, results, fields){
+			  		if(error) throw error;
+			  		if(results.affectedRows > 0){
+			  			resolve(token);
+			  		}else{
+			  			reject("not found");
+			  		}
+			  	})
+			}
+		)
+	})
 }
 
 
 let loginUser = async function(req, res){//token을 발급해준다 
 	
-	console.log("login controller called");
 	var response =  verifyPassword(req.body.userID, req.body.userPassword).then(function(value){
 		if(value == 'success'){
 			findUserByID(req.body.userID, async function (error, userInfo, fields) {
@@ -189,8 +226,9 @@ let loginUser = async function(req, res){//token을 발급해준다
 					userInfo[0].password = undefined;
 					userInfo[0].num = undefined;
 					userInfo[0].salt = undefined;
-					const signed_jwt = await signJWT(userInfo[0]);
+					const signed_jwt = await signJWT(userInfo[0]);//jwt 발급 
 					userInfo[0].jwt = signed_jwt;
+					var iat = signed_jwt;
 					res.status(200).json(userInfo);					
 				}else{
 					res.status(404).send("not found");
@@ -206,11 +244,55 @@ let loginUser = async function(req, res){//token을 발급해준다
 }
 
 
+
+
+
+let reset_password = async function(req, res){
+
+	if(req.body.userID == null ||req.body.userPassword == null){
+		res.status(500).send("no info");
+		return false;
+	}
+
+	try{
+		var verification_result = await isVerified(req.body.userID);
+	}catch(err){
+		res.status(403).send(err);
+		return false;
+	}
+	
+	var salt;
+	var hashedPW;
+	try{
+		var arr_hashInfo = await cryptoPassword(req.body.userPassword, null)
+	}catch(err){
+		res.status(500).send(err);
+		return false;
+	}
+	hashedPW = arr_hashInfo[0];
+	salt = arr_hashInfo[1];
+	console.log(hashedPW);
+	console.log(salt);
+
+	var sql = 'UPDATE USER SET password = ?, salt = ? WHERE userID = ?';
+	var params = [ hashedPW, salt, req.body.userID];
+	db.query(sql, params, function(error, results, fields){
+  		if(error) throw error;
+  		if(results.affectedRows > 0){
+  			res.status(200).send("success");
+  		}else{
+  			res.status(404).send("user is not found");
+  		}
+
+  	})
+}
+
+
 module.exports = {
-	findUserByID : findUserByID,
 	checkLoginInput : checkLoginInput,
 	checkRegisterInput : checkRegisterInput,
 	getUserInfoByID : getUserInfoByID,
 	registerUser : registerUser,
 	loginUser : loginUser,
+	reset_password : reset_password
 };
