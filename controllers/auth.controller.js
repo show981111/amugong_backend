@@ -130,8 +130,11 @@ var verify_token = function(req, res){
 }
 
 var auto_login = function(req, res){
-	if (!req.headers.authorization && !token.startsWith('Bearer ')) {
+	if (!req.headers.authorization) {
 	    return res.status(403).json({ error: 'No credential' });
+	}
+	if(!req.headers.authorization.startsWith('Bearer ')) {
+		return res.status(403).json({ error: 'No credential' });
 	}
 	var post_userID = req.body.userID;
 

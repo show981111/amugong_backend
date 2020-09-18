@@ -8,6 +8,7 @@ const moment = require('moment');
 const jwt = require('jsonwebtoken');
 const jwt_config  = require('../config/db-jwt-config.json');
 
+
 const secret_key = jwt_config.secret_key;
 
 
@@ -226,7 +227,13 @@ let loginUser = async function(req, res){//token을 발급해준다
 					userInfo[0].password = undefined;
 					userInfo[0].num = undefined;
 					userInfo[0].salt = undefined;
-					const signed_jwt = await signJWT(userInfo[0]);//jwt 발급 
+					try{
+						const signed_jwt = await signJWT(userInfo[0]);//jwt 발급 
+					}catch(error){
+						res.status(404).send(error);
+						return false;
+					}
+					
 					userInfo[0].jwt = signed_jwt;
 					var iat = signed_jwt;
 					res.status(200).json(userInfo);					
