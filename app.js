@@ -7,6 +7,7 @@ const bodyParser = require('body-parser');
 const port = 8000;
 const http = require('http');
 // const socketio = require('socket.io');
+app.set('view engine', 'ejs');
 var userRouter = require('./routes/user.routes.js');
 var authRouter = require('./routes/auth.routes.js');
 var mapRouter = require('./routes/map.routes.js');

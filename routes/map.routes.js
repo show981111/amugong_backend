@@ -10,8 +10,7 @@ router.use(bodyParser.json())
 
 
 
-router.get('/:lat/:lang',mapController.showMap)
-
+router.get('/:lat/:long',mapController.showMap)
 
 
 module.exports = router;
