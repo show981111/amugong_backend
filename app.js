@@ -11,6 +11,7 @@ app.set('view engine', 'ejs');
 var userRouter = require('./routes/user.routes.js');
 var authRouter = require('./routes/auth.routes.js');
 var mapRouter = require('./routes/map.routes.js');
+var branchRouter = require('./routes/branch.routes.js');
 var checkJWT = require('./middleware/check_jwt.js');
 
 console.log("hello");
@@ -23,6 +24,9 @@ app.use('/api/user', userRouter);
 app.use('/api/auth', authRouter);
 // app.use('/api/map', checkJWT ,authRouter);
 app.use('/api/map' ,mapRouter);
+app.use('/api/branch',branchRouter);
+
+//app.use('/api/branch' ,checkJWT,branchRouter);
 
 
 app.listen(port, () => {

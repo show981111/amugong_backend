@@ -7,8 +7,7 @@ const crypto = require('crypto');
 const moment = require('moment');
 const jwt = require('jsonwebtoken');
 const jwt_config  = require('../config/db-jwt-config.json');
-
-
+const sanitizeHtml = require('sanitize-html');
 const secret_key = jwt_config.secret_key;
 
 
@@ -145,7 +144,7 @@ let registerUser = async function(req, res){
 
 	var sql = 'INSERT INTO USER(userID, name, password, token, salt)'+
 				' VALUES (?,?,?,?,?)  ';
-	var params = [req.body.userID, req.body.name, hashedPW, req.body.token, salt];
+	var params = [sanitizeHtml(req.body.userID), sanitizeHtml(req.body.name), hashedPW, req.body.token, salt];
 
 	findUserByID(req.body.userID, function (error, results, fields) {
 	  if (error) throw error;

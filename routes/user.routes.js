@@ -15,8 +15,6 @@ router.get('/', (req, res) => {//특정유저 얻기
 })
 
 
-router.get('/:userID', userController.checkLoginInput, userController.getUserInfoByID)//특정 유저에 대한 정보 얻기...
-
 router.post('/register', userController.checkRegisterInput, userController.registerUser)
 
 router.post('/login',userController.checkLoginInput, userController.loginUser)

@@ -14,45 +14,46 @@
 <div id="map" style="width:100%;height:100%;"></div>
 
 <script>
-	
-	
-	// jQuery.ajax({
- //        url: "http://show981111.cafe24.com/putWaitList.php",
- //        type: 'POST',
- //        data: {
+	var markers = [];
+	var branchList;
 
- //        },
- //        success: function(data) {
- //            switch(data)
- //            {
- //                case "success":
- //                    alert("성공적으로 요청하였습니다. 관리자의 승인 후 변경됩니다.")
- //                    break;
- //                case "alreadyBooked":
- //                    alert("빈 시간대가 아닙니다.")
- //                    break;
- //                case "already":
- //                    alert("이미 요청하셨습니다.")
- //                    break;
- //                case "internet_fail":
- //                    alert("인터넷 연결을 확인해주세요.")
- //                    break;
- //                case "past":
- //                    alert("오늘날짜와 시작날짜를 다시한번 확인해 주세요.")
- //                    break;
- //                default:
- //                    alert("실패하였습니다.")
- //                    break;
- //            }   
- //        },
+	jQuery.ajax({
+        url: "http://3.34.91.138:8000/api/branch",
+        beforeSend: function (xhr) {
+		    xhr.setRequestHeader ("Authorization", "Bearer " +  "<%= token %>");
+		},
+        type: 'GET',
+        dataType:"json",
+        success: function(data) {
 
- //        error: function(xhr, textStatus, error){
- //            alert("인터넷 연결을 확인해주세요.")
-            
- //        }
- //    });
-	var firstLat = 37;
-	var firstLong = 128;
+        	// var output = JSON.parse(JSON.stringify(data));
+         //    console.log(output);
+            branchList = data;
+        	for (var i = 0; i < branchList.length ; i++) {
+				console.log(branchList[i]);
+				
+			    var position = new naver.maps.LatLng(branchList[i].lat, branchList[i].long);
+
+			    var marker = new naver.maps.Marker({
+			        map: map,
+			        position: position,		
+			        title : branchList[i].branchID		      
+			    });
+			    markers.push(marker);
+			};
+			for (var i=0, ii=markers.length; i<ii; i++) {
+			    naver.maps.Event.addListener(markers[i], 'click', getClickHandler(i));
+			}
+
+        },
+        error: function(xhr, textStatus, error){
+            Print.postMessage('error : ' + error);
+        }
+    });
+
+	var firstLat = <%= firstLat %>;
+	var firstLong = <%= firstLong %>;
+
 
 	var mapOptions = {
 	    center: new naver.maps.LatLng(firstLat,firstLong ),
@@ -68,56 +69,14 @@
 	    map: map
 	};
 
-	var markers = [];
-	var branchList = [];
-
-	var branch = new Object();
-
-
-	branchList = [
-		{
-			branchID : "0",
-			lat : "37.45",
-			long : "127.023"
-		},
-		{
-			branchID : "1",
-			lat : "37.48",
-			long : "127.022"
-		},
-	];
-	
-	for (var i = 0; i < branchList.length ; i++) {
-		console.log(branchList[i]);
-		
-	    var position = new naver.maps.LatLng(branchList[i].lat, branchList[i].long);
-
-	    var marker = new naver.maps.Marker({
-	        map: map,
-	        position: position,		
-	        title : branchList[i].branchID		      
-	    });
-	    markers.push(marker);
-	};
-
-
 	var user_marker = new naver.maps.Marker(markerOptions);
-
-	var tracking = 1;
 
 	function setCurrentLocation(lat, long) {
 		firstLat = lat;
 		firstLong = long;
 		Print.postMessage('set location called' + lat + " / " + long);
 		var new_position = new naver.maps.LatLng(lat, long);
-		if(tracking == 1){
-			map.panTo(new_position);
-			tracking = 0;
-		}
-		
     	user_marker.setPosition(new_position);
-
-
     }
 
 	naver.maps.Event.addListener(user_marker, 'click', function(e){
@@ -146,6 +105,10 @@
 	    }
 	}
 
+	function goToCurrent(){
+		map.panTo(user_marker.getPosition());
+	}
+
 	function showMarker(map, marker) {
 
 	    if (marker.setMap()) return;
@@ -161,14 +124,10 @@
 	function getClickHandler(seq) {
 	    return function(e) {
 	        var markerInfo = branchList[seq];
-	        Print.postMessage(markerInfo);
+	        console.log(markerInfo);
+	        Print.postMessage(JSON.stringify(markerInfo));
 	    }
 	}
-
-	for (var i=0, ii=markers.length; i<ii; i++) {
-	    naver.maps.Event.addListener(markers[i], 'click', getClickHandler(i));
-	}
-
 	//Print.postMessage('Hello World being called from Javascript code');
 </script>
 </body>

@@ -4,11 +4,8 @@ const User = require('../model/user.model.js')
 const bodyParser = require('body-parser')
 const app = express()
 const moment = require('moment');
-var fs = require('fs');
 
 const naver_map  = require('../config/naver_map.json');
-var path = require('path');
-var root = path.resolve(__dirname);
 
 var Promise = require('promise');
 
@@ -22,27 +19,22 @@ app.use(bodyParser.json())
 console.log('map controller called');
 
 
-let getBranchList = function(){
-	return new Promise(function(resolve, reject){
-		var sql = 'SELECT * FROM BRANCH';
-		db.query(sql, function(err, results){
-			if(err) throw err;
-
-			resolve(results);
-		})
-	})
-}
-
 var showMap = async function(req,res){
+	// if (!req.headers.authorization) {
+	//     return res.status(403).json({ error: 'No credential' });
+	// }
+	// if(!req.headers.authorization.startsWith('Bearer ')) {
+	// 	return res.status(403).json({ error: 'No credential' });
+	// }
+	
+	var token = req.headers.authorization;
+	var token = "not";
+	//token = token.slice(7, token.length).trimLeft();
+
 	var lat = req.params.lat;
 	var long = req.params.long;
-	//console.log(__dirname );
-	var branchList = await getBranchList();
-	let path = __dirname.substr(0,__dirname.lastIndexOf('/'));
-	console.log(path);
-	//res.status(200).sendFile(path+'/webview/map.html');
-	res.render('map',{ID:naver_map.CLIENT_ID}) ;
-	// res.status(200).send(``)
+	
+	res.render('map',{ID:naver_map.CLIENT_ID, firstLat : lat , firstLong : long, token: token}) ;
 }
 
 
