@@ -1,6 +1,5 @@
 const express = require('express')
 const db = require('../model/db_connection.js')
-const User = require('../model/user.model.js')
 const bodyParser = require('body-parser')
 const app = express()
 const moment = require('moment');

@@ -4,14 +4,15 @@ const express = require('express');
 var app = express();
 
 const bodyParser = require('body-parser');
-const port = 8000;
 const http = require('http');
 // const socketio = require('socket.io');
 app.set('view engine', 'ejs');
+var port = require('./config/port.json');
 var userRouter = require('./routes/user.routes.js');
 var authRouter = require('./routes/auth.routes.js');
 var mapRouter = require('./routes/map.routes.js');
 var branchRouter = require('./routes/branch.routes.js');
+var resourcesRouter = require('./routes/resources.routes.js');
 var checkJWT = require('./middleware/check_jwt.js');
 
 console.log("hello");
@@ -25,10 +26,10 @@ app.use('/api/auth', authRouter);
 // app.use('/api/map', checkJWT ,authRouter);
 app.use('/api/map' ,mapRouter);
 app.use('/api/branch',branchRouter);
-
+app.use('/api/resources' ,resourcesRouter);
 //app.use('/api/branch' ,checkJWT,branchRouter);
 
 
 app.listen(port, () => {
-  console.log(`Example app listening at http://localhost:${port}`)
+  console.log(`Example app listening at http://localhost:${port.port}`)
 })
