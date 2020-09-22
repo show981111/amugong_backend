@@ -25,7 +25,22 @@ let getBranchList = function(req, res){
 	})
 }
 
+let getBranchListInBox = function(req, res){
+
+	var minlat = req.params.minlat;
+	var minlong = req.params.minlong;
+	var maxlat = req.params.maxlat;
+	var maxlong = req.params.maxlong;
+	
+	var sql = 'SELECT * FROM BRANCH WHERE lat >= ? AND lng >= ? AND lat <= ? AND lng <= ? ';
+	db.query(sql,[minlat, minlong, maxlat, maxlong] ,function(err, results){
+		if(err) throw err;
+
+		res.status(200).json(results);	
+	})
+}
 
 module.exports = {
-	getBranchList : getBranchList
+	getBranchList : getBranchList,
+	getBranchListInBox : getBranchListInBox
 };

@@ -14,42 +14,13 @@
 <div id="map" style="width:100%;height:100%;"></div>
 
 <script>
-	var markers = [];
-	var branchList;
+	// var markers = []; 
+	// var markerListener; 
+	// var branchList;
 
-	jQuery.ajax({
-        url: "http://3.34.91.138:8000/api/branch",
-        beforeSend: function (xhr) {
-		    xhr.setRequestHeader ("Authorization", "Bearer " +  "<%= token %>");
-		},
-        type: 'GET',
-        dataType:"json",
-        success: function(data) {
-
-        	// var output = JSON.parse(JSON.stringify(data));
-         //    console.log(output);
-            branchList = data;
-        	for (var i = 0; i < branchList.length ; i++) {
-				console.log(branchList[i]);
-				
-			    var position = new naver.maps.LatLng(branchList[i].lat, branchList[i].long);
-
-			    var marker = new naver.maps.Marker({
-			        map: map,
-			        position: position,		
-			        title : branchList[i].branchID		      
-			    });
-			    markers.push(marker);
-			};
-			for (var i=0, ii=markers.length; i<ii; i++) {
-			    naver.maps.Event.addListener(markers[i], 'click', getClickHandler(i));
-			}
-
-        },
-        error: function(xhr, textStatus, error){
-            Print.postMessage('error : ' + error);
-        }
-    });
+	var markers = new Object();
+	var markerListener = new Object();
+	var branchListObj = new Object();
 
 	var firstLat = <%= firstLat %>;
 	var firstLong = <%= firstLong %>;
@@ -59,7 +30,60 @@
 	    center: new naver.maps.LatLng(firstLat,firstLong ),
 	    zoom: 16
 	};
-	var map = new naver.maps.Map('map', mapOptions);
+	var map = new naver.maps.Map('map', mapOptions);//지도 등록
+	getBranchesInBox(map.getBounds());
+
+	function getBranchesInBox(mapBounds){
+		console.log("get In box called");
+		// hidePreviousMarkers(map, markers);//이전 마커 삭제
+		// branchList = [];
+		// markers = [];//마커 초기화 
+		// markerListener = null;//이전 마커 리스너 초기화 
+		var minlat = mapBounds._sw._lat;
+		var minlng = mapBounds._sw._lng;
+		var maxlat = mapBounds._ne._lat;
+		var maxlng = mapBounds._ne._lng;
+		jQuery.ajax({
+	        url: "http://3.34.91.138:8000/api/branch/"+minlat+"/"+minlng+"/"+maxlat+"/"+maxlng,
+	        beforeSend: function (xhr) {
+			    xhr.setRequestHeader ("Authorization", "Bearer " +  "<%= token %>");
+			},
+	        type: 'GET',
+	        dataType:"json",
+	        success: function(data) {
+	            branchList = data;
+	        	for (var i = 0; i < branchList.length ; i++) {
+
+					if(branchListObj.hasOwnProperty(branchList[i].branchID)){
+						continue;
+					}
+					console.log(branchList[i]);
+					
+					branchListObj[branchList[i].branchID] = branchList[i];
+				    var position = new naver.maps.LatLng(branchList[i].lat, branchList[i].lng);
+				    console.log(position);
+				    var marker = new naver.maps.Marker({
+				        map: map,
+				        position: position,		
+				        title : branchList[i].branchID		      
+				    });
+				    // markers.push(marker);
+				    markers[branchList[i].branchID] = marker;
+				    marker.setMap(map);//각각 마커 등록 
+				    markerListener[branchList[i].branchID] = naver.maps.Event.addListener(marker, 'click', getClickHandler(branchList[i].branchID));
+				};
+				// for (var i=0, ii=markers.length; i<ii; i++) {
+				//     markerListener = naver.maps.Event.addListener(markers[i], 'click', getClickHandler(i));
+				// }
+
+	        },
+	        error: function(xhr, textStatus, error){
+	            Print.postMessage('error : ' + error);
+	        }
+	    });
+	}
+
+
 	var user_position = new naver.maps.LatLng(firstLat, firstLong);
 
 	// var map = new naver.maps.Map('map', mapOptions);
@@ -84,48 +108,58 @@
 		map.panTo(e.coord);
 	});
 	naver.maps.Event.addListener(map, 'idle', function() {
-	    updateMarkers(map, markers);
+		
+		getBranchesInBox(map.getBounds());
+	    // updateMarkers(map, markers);
 	});
 
-	function updateMarkers(map, markers) {
+	// function updateMarkers(map, markers) {
 
-	    var mapBounds = map.getBounds();
-	    var marker, position;
+	//     var mapBounds = map.getBounds();
+	//     var marker, position;
 
-	    for (var i = 0; i < markers.length; i++) {
+	//     for (var i = 0; i < markers.length; i++) {
 
-	        marker = markers[i]
-	        position = marker.getPosition();
+	//         marker = markers[i]
+	//         position = marker.getPosition();
 
-	        if (mapBounds.hasLatLng(position)) {
-	            showMarker(map, marker);
-	        } else {
-	            hideMarker(map, marker);
-	        }
-	    }
-	}
+	//         if (mapBounds.hasLatLng(position)) {
+	//             showMarker(map, marker);
+	//         } else {
+	//             hideMarker(map, marker);
+	//         }
+	//     }
+	// }
 
 	function goToCurrent(){
 		map.panTo(user_marker.getPosition());
 	}
 
-	function showMarker(map, marker) {
+	// function showMarker(map, marker) {
 
-	    if (marker.setMap()) return;
-	    marker.setMap(map);
-	}
+	//     if (marker.setMap()) return;
+	//     marker.setMap(map);
+	// }
 
-	function hideMarker(map, marker) {
+	// function hideMarker(map, marker) {
 
-	    if (!marker.setMap()) return;
-	    marker.setMap(null);
+	//     if (!marker.setMap()) return;
+	//     marker.setMap(null);
+	// }
+
+	function hidePreviousMarkers(map, markers){
+		for(var i = 0; i < markers.length; i++){
+			markers[i].setMap(null);
+		}
 	}
 
 	function getClickHandler(seq) {
 	    return function(e) {
-	        var markerInfo = branchList[seq];
-	        console.log(markerInfo);
-	        Print.postMessage(JSON.stringify(markerInfo));
+	    	console.log(branchListObj[seq]);
+	        // var markerInfo = branchList[seq];
+	        // console.log(markers[seq].title);
+	        // console.log(markerInfo);
+	        // Print.postMessage(JSON.stringify(markerInfo));
 	    }
 	}
 	//Print.postMessage('Hello World being called from Javascript code');
