@@ -31,11 +31,23 @@ let getBranchListInBox = function(req, res){
 	var minlong = req.params.minlong;
 	var maxlat = req.params.maxlat;
 	var maxlong = req.params.maxlong;
+
+	var current_time = moment().format('YYYY-MM-DD HH:mm');
+	console.log(current_time);
+
+	// var sql = `SELECT DISTINCT br.*,  COUNT(rsrv.num) AS num FROM BRANCH br
+	// 	LEFT JOIN SEAT AS st on (st.FK_SEAT_branchID = br.branchID) 
+	// 	LEFT JOIN RESERVATION AS rsrv ON (rsrv.startTime <= ? AND 
+	//     rsrv.endTime >?) AND (rsrv.FK_RSRV_seatID = st.seatID)
+	//     WHERE br.lat >= ? AND br.lng >= ? AND br.lat <= ? AND br.lng <= ?
+	//     GROUP BY br.branchID;`;
+	// var params = [current_time,current_time,minlat, minlong, maxlat, maxlong];
 	
 	var sql = 'SELECT * FROM BRANCH WHERE lat >= ? AND lng >= ? AND lat <= ? AND lng <= ? ';
-	db.query(sql,[minlat, minlong, maxlat, maxlong] ,function(err, results){
+	var params = [minlat, minlong, maxlat, maxlong] ;
+	db.query(sql,params ,function(err, results){
 		if(err) throw err;
-
+		console.log();
 		res.status(200).json(results);	
 	})
 }

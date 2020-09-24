@@ -13,6 +13,7 @@ var authRouter = require('./routes/auth.routes.js');
 var mapRouter = require('./routes/map.routes.js');
 var branchRouter = require('./routes/branch.routes.js');
 var resourcesRouter = require('./routes/resources.routes.js');
+var reservationRouter = require('./routes/reservation.routes.js');
 var checkJWT = require('./middleware/check_jwt.js');
 
 console.log("hello");
@@ -27,6 +28,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/map' ,mapRouter);
 app.use('/api/branch',branchRouter);
 app.use('/api/resources' ,resourcesRouter);
+app.use('/api/reservation' ,reservationRouter);
 //app.use('/api/branch' ,checkJWT,branchRouter);
 
 

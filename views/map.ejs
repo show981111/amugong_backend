@@ -147,11 +147,11 @@
 	//     marker.setMap(null);
 	// }
 
-	function hidePreviousMarkers(map, markers){
-		for(var i = 0; i < markers.length; i++){
-			markers[i].setMap(null);
-		}
-	}
+	// function hidePreviousMarkers(map, markers){
+	// 	for(var i = 0; i < markers.length; i++){
+	// 		markers[i].setMap(null);
+	// 	}
+	// }
 
 	function getClickHandler(seq) {
 	    return function(e) {
@@ -159,7 +159,7 @@
 	        // var markerInfo = branchList[seq];
 	        // console.log(markers[seq].title);
 	        // console.log(markerInfo);
-	        // Print.postMessage(JSON.stringify(markerInfo));
+	        Print.postMessage(JSON.stringify(branchListObj[seq]));
 	    }
 	}
 	//Print.postMessage('Hello World being called from Javascript code');
