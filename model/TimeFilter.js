@@ -12,7 +12,7 @@ TimeFilter.prototype.validateUserInput = function(){
 	{
 		var momentStart = moment(this.data.start , 'YYYY-MM-DD HH:mm', true);
 		var momentEnd = moment(this.data.end , 'YYYY-MM-DD HH:mm', true);
-		
+
 		if(moment(momentStart, 'YYYY-MM-DD HH:mm').isValid() && moment(momentEnd, 'YYYY-MM-DD HH:mm').isValid()){
 			
 		}else{
@@ -31,12 +31,20 @@ TimeFilter.prototype.validateReservationInput = function(){
     if("startTime" in this.data && "endTime" in this.data && "seatID" in this.data && "userID" in this.data)
 	{
 		var momentStart = moment(this.data.startTime , 'YYYY-MM-DD HH:mm', true);
-		var momentEnd = moment(this.data.startTime , 'YYYY-MM-DD HH:mm', true);
+		var momentEnd = moment(this.data.endTime , 'YYYY-MM-DD HH:mm', true);
 
 		if(moment(momentStart, 'YYYY-MM-DD HH:mm').isValid() && moment(momentEnd, 'YYYY-MM-DD HH:mm').isValid()){
 			if(emailRegexp.test(this.data.userID)){
 				if(digitRegexp.test(this.data.seatID)){
+					if(momentStart.isBefore(momentEnd)){
+						if(momentStart.isAfter(moment()) && momentEnd.isAfter(moment())){
 
+						}else{
+							this.errors.push("Before today");
+						}
+					}else{
+						this.errors.push("endTime is faster");
+					}
 				}else{
 					this.errors.push("seatID is not number");
 				}
