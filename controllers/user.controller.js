@@ -198,7 +198,7 @@ let signJWT = function(userInfo){
 	            subject: 'userInfo',
 	        }, 
 			function(err, token) {
-				if(err) reject(err);
+				if(err){reject(err); return;}
 			  	//console.log(token);
 			  	//여기서 Iat을 DB에 꽂아주기! 
 			  	var sql = 'UPDATE USER SET issuedAt = ? WHERE userID = ?';

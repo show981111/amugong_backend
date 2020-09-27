@@ -1,5 +1,6 @@
 const express = require('express')
 const db = require('../model/db_connection.js')
+const TimeFilter = require('../model/TimeFilter.js')
 const bodyParser = require('body-parser')
 const app = express()
 const moment = require('moment');
@@ -31,9 +32,25 @@ let getBranchListInBox = function(req, res){
 	var minlong = req.params.minlong;
 	var maxlat = req.params.maxlat;
 	var maxlong = req.params.maxlong;
+	var startDateTime = req.params.startTime;
+	var endDateTime = req.params.endTime;
 
-	var current_time = moment().format('YYYY-MM-DD HH:mm');
-	console.log(current_time);
+	const timeFilter = new TimeFilter(req.params);
+	timeFilter.validateTime();
+
+	if(timeFilter.errors.length > 0){
+		res.status(500).send(timeFilter.errors[0]);
+		return;
+	}
+	var startTime = moment(startDateTime).format("HH:mm");
+	var endTime = moment(endDateTime).format("HH:mm");
+	var dow = moment(startDateTime).day();
+	console.log(startTime);
+	console.log(endTime);
+	console.log(dow);
+
+	// var current_time = moment().format('YYYY-MM-DD HH:mm');
+	// console.log(current_time);
 
 	// var sql = `SELECT DISTINCT br.*,  COUNT(rsrv.num) AS num FROM BRANCH br
 	// 	LEFT JOIN SEAT AS st on (st.FK_SEAT_branchID = br.branchID) 
@@ -42,13 +59,57 @@ let getBranchListInBox = function(req, res){
 	//     WHERE br.lat >= ? AND br.lng >= ? AND br.lat <= ? AND br.lng <= ?
 	//     GROUP BY br.branchID;`;
 	// var params = [current_time,current_time,minlat, minlong, maxlat, maxlong];
+
+	var sql = `SELECT br.*, DATE_FORMAT(bh1.businessHourStart, '%H:%i') AS businessHourStart, 
+					DATE_FORMAT(bh1.businessHourEnd, '%H:%i') AS businessHourEnd, 
+					bh1.dow FROM amugong_db.BRANCH br
+				 	LEFT JOIN amugong_db.BUSINESSHOUR bh ON
+					(br.branchID = bh.FK_BHOUR_branchID AND
+				    (bh.businessHourStart <= STR_TO_DATE(?,'%H:%i' )
+				    AND bh.businessHourEnd >= STR_TO_DATE(?,'%H:%i' )))
+				    LEFT JOIN amugong_db.BUSINESSHOUR bh1 ON
+					(bh.FK_BHOUR_branchID = bh1.FK_BHOUR_branchID)
+				    WHERE FIND_IN_SET(?, bh.dow) > 0 AND 
+				    lat >= ? AND lng >= ? AND lat <= ? AND lng <= ? order by br.branchID`;
+	var params = [startTime, endTime, dow, minlat, minlong, maxlat, maxlong];
 	
-	var sql = 'SELECT * FROM BRANCH WHERE lat >= ? AND lng >= ? AND lat <= ? AND lng <= ? ';
-	var params = [minlat, minlong, maxlat, maxlong] ;
+	// var sql = 'SELECT * FROM BRANCH WHERE lat >= ? AND lng >= ? AND lat <= ? AND lng <= ? ';
+	// var params = [minlat, minlong, maxlat, maxlong] ;
 	db.query(sql,params ,function(err, results){
 		if(err) throw err;
 		console.log();
-		res.status(200).json(results);	
+		var prevID = -1 ;
+		var index = 0;
+		var branchObj = new Object();
+		for(var i  = 0; i < results.length ; i++){
+			if(!branchObj.hasOwnProperty(results[i].branchID))
+			{
+				var jsonOb = new Object();
+				jsonOb.branchID = results[i].branchID;
+				jsonOb.branchName = results[i].branchName;
+				jsonOb.lat = results[i].lat;
+				jsonOb.lng = results[i].lng;
+				jsonOb.address = results[i].address;
+				jsonOb.branchIntro = results[i].branchIntro;
+				jsonOb.totalSeat = results[i].totalSeat;
+				jsonOb.curNum = results[i].curNum;
+				jsonOb.businessHour = [];
+				jsonOb.businessHour.push({
+					"businessHourStart" : results[i].businessHourStart,
+					"businessHourEnd" : results[i].businessHourEnd,
+					"dow" : results[i].dow
+				});
+				branchObj[results[i].branchID] = jsonOb;
+			}else{
+				branchObj[results[i].branchID].businessHour.push({
+					"businessHourStart" : results[i].businessHourStart,
+					"businessHourEnd" : results[i].businessHourEnd,
+					"dow" : results[i].dow
+				});
+			}
+		}
+		console.log(branchObj);
+		res.status(200).json(branchObj);	
 	})
 }
 
