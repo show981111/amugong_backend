@@ -24,7 +24,8 @@
 
 	var firstLat = <%= firstLat %>;
 	var firstLong = <%= firstLong %>;
-
+	var startDateTime = <%= startDateTime %>;
+	var endDateTime = <%= endDateTime %>;
 
 	var mapOptions = {
 	    center: new naver.maps.LatLng(firstLat,firstLong ),
@@ -44,37 +45,32 @@
 		var maxlat = mapBounds._ne._lat;
 		var maxlng = mapBounds._ne._lng;
 		jQuery.ajax({
-	        url: "http://3.34.91.138:8000/api/branch/"+minlat+"/"+minlng+"/"+maxlat+"/"+maxlng,
+	        url: "http://3.34.91.138:8000/api/branch/"+minlat+"/"+minlng+"/"+maxlat+"/"+maxlng+ '/' +startDateTime + '/'+endDateTime,
 	        beforeSend: function (xhr) {
 			    xhr.setRequestHeader ("Authorization", "Bearer " +  "<%= token %>");
 			},
 	        type: 'GET',
 	        dataType:"json",
 	        success: function(data) {
-	            var branchList = data;
-	        	for (var i = 0; i < branchList.length ; i++) {
-
-					if(branchListObj.hasOwnProperty(branchList[i].branchID)){
+	            for(var key in data){
+				    //console.log(attributename+": "+myobject[attributename]);
+				    if(branchListObj.hasOwnProperty(key)){
 						continue;
 					}
-					console.log(branchList[i]);
 					
-					branchListObj[branchList[i].branchID] = branchList[i];
-				    var position = new naver.maps.LatLng(branchList[i].lat, branchList[i].lng);
+					branchListObj[key] = data[key];
+				    var position = new naver.maps.LatLng(data[key].lat, data[key].lng);
 				    console.log(position);
 				    var marker = new naver.maps.Marker({
 				        map: map,
 				        position: position,		
-				        title : branchList[i].branchID		      
+				        title : data[key].branchID		      
 				    });
 				    // markers.push(marker);
-				    markers[branchList[i].branchID] = marker;
+				    markers[data[key].branchID] = marker;
 				    marker.setMap(map);//각각 마커 등록 
-				    markerListener[branchList[i].branchID] = naver.maps.Event.addListener(marker, 'click', getClickHandler(branchList[i].branchID));
-				};
-				// for (var i=0, ii=markers.length; i<ii; i++) {
-				//     markerListener = naver.maps.Event.addListener(markers[i], 'click', getClickHandler(i));
-				// }
+				    markerListener[data[key].branchID] = naver.maps.Event.addListener(marker, 'click', getClickHandler(data[key].branchID));
+				}
 
 	        },
 	        error: function(xhr, textStatus, error){

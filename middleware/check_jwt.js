@@ -24,6 +24,8 @@ var check_jwt = function(req, res, next){
     		res.status(403).json({ error: err});
     		return;
     	}
+    	console.log(decoded);
+    	req.token_userID = decoded.userID;
     	next();
 	});
 

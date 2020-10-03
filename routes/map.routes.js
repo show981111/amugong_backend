@@ -10,7 +10,7 @@ router.use(bodyParser.json())
 
 
 
-router.get('/:lat/:long',mapController.showMap)
+router.get('/:lat/:long/:startDateTime/:endDateTime',mapController.showMap)
 
 
 module.exports = router;

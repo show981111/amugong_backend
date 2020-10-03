@@ -31,8 +31,11 @@ var showMap = async function(req,res){
 
 	var lat = req.params.lat;
 	var long = req.params.long;
+	var startDateTime = req.params.startDateTime;
+	var endDateTime = req.params.endDateTime;	
 	
-	res.render('map',{ID:naver_map.CLIENT_ID, firstLat : lat , firstLong : long, token: token}) ;
+	res.render('map',{ID:naver_map.CLIENT_ID, firstLat : lat , firstLong : long, token: token,
+						startDateTime :startDateTime ,endDateTime : endDateTime}) ;
 }
 
 

@@ -8,18 +8,14 @@ const TimeFilter =function (data) {
 }
 
 TimeFilter.prototype.validateUserInput = function(){
-
-    if("start" in this.data && "end" in this.data && "branchID" in this.data)
+	const digitRegexp = /^\d+$/;
+    if("startTime" in this.data && "endTime" in this.data && "branchID" in this.data)
 	{
-		var momentStart = moment(this.data.start , 'YYYY-MM-DD HH:mm', true);
-		var momentEnd = moment(this.data.end , 'YYYY-MM-DD HH:mm', true);
-
-		if(moment(momentStart, 'YYYY-MM-DD HH:mm').isValid() && moment(momentEnd, 'YYYY-MM-DD HH:mm').isValid()){
-			
+		if(digitRegexp.test(this.data.branchID)){
+			this.validateTime();
 		}else{
-			this.errors.push("time is not valid");
+			this.errors.push("branchID is not number");
 		}
-		
 	}else{
 		this.errors.push("not enough data");
 	}
