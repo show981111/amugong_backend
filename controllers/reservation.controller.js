@@ -6,6 +6,7 @@ const moment = require('moment');
 const TimeFilter = require('../model/TimeFilter.js')
 const sanitizeHtml = require('sanitize-html');
 var Promise = require('promise');
+var schedule = require('node-schedule');
 
 
 require('moment-timezone'); 
@@ -60,7 +61,6 @@ let getSeatStateList = async function(req, res){//change needed
 		 	 DATE_FORMAT(rsrv.endTime, '%Y-%m-%d %H:%i') AS endTime, DATE_FORMAT(rsrv.real_start, '%Y-%m-%d %H:%i') AS real_start,
 		 	 DATE_FORMAT(rsrv.real_end, '%Y-%m-%d %H:%i') AS real_end, rsrv.FK_RSRV_userID , rsrv.num
 		 	 FROM amugong_db.SEAT seat
-			RIGHT JOIN amugong_db.BRANCH AS br ON (seat.FK_SEAT_branchID = br.branchID)
 			LEFT JOIN amugong_db.RESERVATION AS rsrv ON 
 			((STR_TO_DATE(?,'%Y-%m-%d %H:%i') <= rsrv.startTime AND
 			 rsrv.startTime < STR_TO_DATE(? ,'%Y-%m-%d %H:%i')) OR 
@@ -133,14 +133,13 @@ let isTimeAvailableInBranch = function(startDateTime, endDateTime, branchID){
 }
 
 let isTimeAvailableForSeat = async function(startDateTime, endDateTime, seatID){
-	var sql = `SELECT br.branchID, seat.seatID FROM amugong_db.SEAT seat LEFT JOIN amugong_db.BRANCH br 
-				ON seat.FK_SEAT_branchID = br.branchID 
-			    WHERE seat.seatID = ?`;
+	var sql = `SELECT seat.FK_SEAT_branchID, seat.seatID FROM amugong_db.SEAT seat 
+			    WHERE seat.seatID = ?  LIMIT 1`;
 	return new Promise(function(resolve, reject){
 		db.query(sql , [seatID], function(err, results){
 			if(err) {reject(err); return;};
 			if(results.length > 0){
-				isTimeAvailableInBranch(startDateTime , endDateTime, results[0].branchID)
+				isTimeAvailableInBranch(startDateTime , endDateTime, results[0].FK_SEAT_branchID)
 				.catch(function(err){
 					reject(err);
 					return;
@@ -156,8 +155,8 @@ let isTimeAvailableForSeat = async function(startDateTime, endDateTime, seatID){
 	});
 }
 
-let reserveSeat = async function(req, res){
-	var purchasedAt = moment().format('YYYY-MM-DD HH:mm');
+let reserveSeat = async function(req, res){//결제 시작하면 일단 예약 인서트 해준다 
+	var purchasedAt = moment().format('YYYY-MM-DD HH:mm:ss');
 	console.log(req.body);
 	var data = req.body;
 	const timeFilter = new TimeFilter(data);
@@ -192,13 +191,82 @@ let reserveSeat = async function(req, res){
 						, sanitizeHtml(data.endTime), purchasedAt];
 			db.query(sql, params, function(err, results){
 				if(err) {res.status(400).send(err);};
-				res.status(200).send("success");
+
+				var checkPaymentID = req.token_userID+data.seatID+purchasedAt+'pay';//3분까지 결제 데드라인 
+				// var scheduleID = req.token_userID+data.seatID+purchasedAt+'alarm';//시작하기 5분 10분 전 알림 
+				var enterCheckID = req.token_userID+req.body.seatID+purchasedAt+'enter';//시작하고 나서 30분 뒤에도 안오면 취
+
+				var schedule_info = {
+					userID : req.token_userID,
+					seatID : req.body.seatID,
+					purchasedAt : purchasedAt
+				};
+
+				var checkPaymentDeadLine = moment(purchasedAt,'YYYY-MM-DD HH:mm:ss').add(3, data.endTime, 'minutes');
+				var paymentJob = schedule.scheduleJob(checkPaymentID , checkPaymentDeadLine.toDate(), function(data){
+					var sql = `UPDATE RESERVATION SET status = IF(isPaid=0,0,1) 
+						WHERE FK_RSRV_userID = ? AND FK_RSRV_seatID = ? AND purchasedAt = ?`;
+					var paramVal = [data.userID, data.seatID, data.purchasedAt];
+					db.query(sql, paramVal, function(err, results){
+						if(err) {
+							var id = data.userID+data.seatID+data.purchasedAt+'pay';
+							console.log(id ,err); 
+							return;
+						}
+					});//3분 뒤에도 pay가 안되어있다면 취소 
+				}.bind(null,schedule_info));
+
+				var cancelDeadLine = moment(data.endTime,'YYYY-MM-DD HH:mm').add(30, data.endTime, 'minutes');
+				var alarmForCancel = schedule.scheduleJob(enterCheckID , cancelDeadLine.toDate(), function(data){
+					var sql = `UPDATE RESERVATION SET status = IF(real_start is null,0,1) WHERE 
+						FK_RSRV_userID = ? AND FK_RSRV_seatID = ? AND purchasedAt = ?`;
+					var paramVal = [data.userID, data.seatID, data.purchasedAt];
+					db.query(sql, paramVal, function(err, results){
+						if(err) {
+							var id = data.userID+data.seatID+data.purchasedAt+'pay';
+							console.log(id ,err); 
+							return;
+						}
+					});//예약 시작시간으로부터 30분 뒤에도 입장 안했으면 예약 취소
+				}.bind(null,schedule_info));
+
+
+				res.status(200).json({status : "success", purchasedAt : purchasedAt});
+				// 여기서 끝나는 시간 30분 후에 스케쥴러 해서 그떄 real_start is NUll status = 1로 업데이트 
 			});
 		}else{
 			res.status(403).send("filled");
 		}
 	}
 }
+
+let updatePaidStatus = function(req, res){
+	// req.token_userID+data.seatID+purchasedAt
+
+	if(req.token_userID == null && req.body.seatID == null && req.body.purchasedAt == null){
+		res.status(400).send("null value included");
+		return;
+	}
+	var sql = `UPDATE RESERVATION SET isPaid = '1' WHERE FK_RSRV_userID = ? AND FK_RSRV_seatID = ? AND purchasedAt = ?`;
+	var prarams = [req.token_userID, req.body.seatID, req.body.purchasedAt];
+	db.query(sql, params, function(err, results){
+		if(err) {
+			res.status(400).send(err);
+			return;
+		}
+		if(results.affectedRows > 0){
+			var checkPayment = req.token_userID+req.body.seatID+req.body.purchasedAt+'pay';
+			var pay_job = schedule.scheduledJobs[checkPayment];
+			if(pay_job != undefined) pay_job.cancel();
+			res.status(200).send('success');
+		}else{
+			res.status(404).send('not found');
+		}
+	})
+}
+
+
+// let deleteReservationDuetoUnp
 
 let deleteReservation = function(req, res){
 	if("num" in req.params && "startTime" in req.params &&req.token_userID != undefined){
@@ -287,7 +355,16 @@ let extendReservation = function(req, res){
 				}
 				console.log(this.sql);
 				if(results.affectedRows > 0){
+					//////
+					//여기서 스케쥴러 기존 끝나는 알림 스케줄 끄고 다시 다 설정한다! 
+					var job_id = req.body.num+ "out";
+					var jot_out = schedule.scheduledJobs[job_id];
+					if(jot_out != undefined) jot_out.cancel();
+					/////
+					//끝나는 스케쥴러 다시 잡아주기!!!
+					////
 					res.status(200).send("success");
+
 				}else{
 					res.status(404).send("NOT FOUND");
 				}
@@ -308,5 +385,6 @@ module.exports = {
 	reserveSeat : reserveSeat,
 	deleteReservation : deleteReservation,
 	getMyReservation : getMyReservation,
-	extendReservation : extendReservation
+	extendReservation : extendReservation,
+	updatePaidStatus : updatePaidStatus
 };

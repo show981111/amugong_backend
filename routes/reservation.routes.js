@@ -12,6 +12,7 @@ router.get('/seat/:branchID/:startTime/:endTime', reservationController.checkFil
 router.delete('/:num/:startTime', reservationController.deleteReservation);
 router.post('/seat', reservationController.reserveSeat);
 router.put('/extend/', reservationController.extendReservation);
+router.put('/paid/', reservationController.updatePaidStatus);
 
 
 
