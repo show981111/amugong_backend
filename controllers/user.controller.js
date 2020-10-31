@@ -33,7 +33,7 @@ var checkLoginInput =  function(req,res,next){
 	const user = new User(data);
 	user.validateUserInput();
 	if(user.errors.length > 0){
-		res.status(500).send(user.errors[0]);
+		res.status(400).send(user.errors[0]);
 	}else{
 		next();
 	}
@@ -44,7 +44,7 @@ var checkRegisterInput = function(req,res,next){
 	const user = new User(req.body);
 	user.validateRegisterInput();
 	if(user.errors.length > 0){
-		res.status(500).send(user.errors[0]);
+		res.status(400).send(user.errors[0]);
 	}else{
 		next();
 	}
@@ -82,7 +82,7 @@ var getUserInfoByID = function(req, res){
 }
 
 let isVerified = function(userID){
-	var sql = 'SELECT isVerified, issuedAt FROM TEMPUSER WHERE userEmail = ?';
+	var sql = 'SELECT isVerified, issuedAt FROM TEMPUSER WHERE userPhone = ?';
 	console.log(userID);
 	return new Promise(function(resolve, reject){
 		db.query(sql, [userID], function(err, results, fields){
@@ -199,7 +199,7 @@ let signJWT = function(userInfo){
 	        }, 
 			function(err, token) {
 				if(err){reject(err); return;}
-			  	//console.log(token);
+
 			  	//여기서 Iat을 DB에 꽂아주기! 
 			  	var sql = 'UPDATE USER SET issuedAt = ? WHERE userID = ?';
 			  	db.query(sql, [current_time,userInfo.userID], function(error, results, fields){
@@ -217,7 +217,7 @@ let signJWT = function(userInfo){
 
 
 let loginUser = async function(req, res){//token을 발급해준다 
-	
+	signed_jwt = "empty";
 	var response =  verifyPassword(req.body.userID, req.body.userPassword).then(function(value){
 		if(value == 'success'){
 			findUserByID(req.body.userID, async function (error, userInfo, fields) {
@@ -226,15 +226,16 @@ let loginUser = async function(req, res){//token을 발급해준다
 					userInfo[0].password = undefined;
 					userInfo[0].num = undefined;
 					userInfo[0].salt = undefined;
+					console.log(userInfo);
 					try{
-						const signed_jwt = await signJWT(userInfo[0]);//jwt 발급 
+						signed_jwt = await signJWT(userInfo[0]);//jwt 발급 
 					}catch(error){
-						res.status(404).send(error);
+						res.status(403).send(error);
 						return false;
 					}
-					
+					if(signed_jwt == "empty") res.status(500).send("signing jwt error");
 					userInfo[0].jwt = signed_jwt;
-					var iat = signed_jwt;
+					// var iat = signed_jwt;
 					res.status(200).json(userInfo);					
 				}else{
 					res.status(404).send("not found");
@@ -256,7 +257,7 @@ let loginUser = async function(req, res){//token을 발급해준다
 let reset_password = async function(req, res){
 
 	if(req.body.userID == null ||req.body.userPassword == null){
-		res.status(500).send("no info");
+		res.status(400).send("no info");
 		return false;
 	}
 

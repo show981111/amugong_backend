@@ -4,14 +4,14 @@ const User =function (data) {
 }
 
 User.prototype.validateUserInput = function(){
-    const emailRegexp = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    const phoneRegex = /^\d+$/;
 
     if("userID" in this.data)
 	{
-		if(emailRegexp.test(this.data.userID)){
+		if(phoneRegex.test(this.data.userID) && this.data.userID.length == 11){
 		
 		}else{
-			this.errors.push("ID is not email");
+			this.errors.push("ID is not PhoneNumber");
 		}
 	}else{
 		this.errors.push("no ID");
@@ -19,12 +19,12 @@ User.prototype.validateUserInput = function(){
 }
 
 User.prototype.validateRegisterInput = function(){
-    const emailRegexp = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-    if("userID" in this.data  && "name" in this.data && "userPassword" in this.data){
-		if(emailRegexp.test(this.data.userID)){
+    const phoneRegex = /^\d+$/;
+    if("userID" in this.data  && "name" in this.data && "userPassword" in this.data && "token" in this.data){
+		if(phoneRegex.test(this.data.userID) && this.data.userID.length == 11){
 			
 		}else{
-			this.errors.push("ID is not email");
+			this.errors.push("ID is not PhoneNumber");
 		}
 	}else{
 		this.errors.push("data is not enough");

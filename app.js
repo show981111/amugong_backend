@@ -16,6 +16,21 @@ var resourcesRouter = require('./routes/resources.routes.js');
 var reservationRouter = require('./routes/reservation.routes.js');
 var visitRouter = require('./routes/visit.routes.js');
 var checkJWT = require('./middleware/check_jwt.js');
+const swaggerUi = require('swagger-ui-express');
+const swaggerJsDoc = require('swagger-jsdoc');
+const swaggerOptions = {
+	swaggerDefinition: {
+		info : {
+			title: 'Amugong',
+			version: '1.0.0',
+			description: 'Api description for Amugong',
+			host: "localhost:8000"
+		}
+	},
+	apis : ["./routes/*.js"]
+};
+
+const swaggerDocs = swaggerJsDoc(swaggerOptions);
 
 console.log("hello");
 app.use(express.static(path.join(__dirname, 'public')));
@@ -32,6 +47,7 @@ app.use('/api/resources' ,resourcesRouter);
 app.use('/api/reservation' , checkJWT,reservationRouter);
 app.use('/api/visit', checkJWT, visitRouter);
 //app.use('/api/branch' ,checkJWT,branchRouter);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 
 app.listen(port, () => {

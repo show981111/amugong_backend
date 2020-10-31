@@ -22,7 +22,7 @@ app.use(bodyParser.json())
 
 console.log('controller called');
 
-var checkEmailInput =  function(req,res,next){
+var checkPhoneInput =  function(req,res,next){
 	var data;
 	if (req.method == "POST") {
        data = req.body;
@@ -32,7 +32,7 @@ var checkEmailInput =  function(req,res,next){
 	const user = new User(data);
 	user.validateUserInput();
 	if(user.errors.length > 0){
-		res.status(500).send(user.errors[0]);
+		res.status(400).send(user.errors[0]);
 	}else{
 		next();
 	}
@@ -53,18 +53,18 @@ let transporter = nodemailer.createTransport({
 	},
 });
 
-let signJWT = function(userEmail){
+let signJWT = function(userPhone){
 	return new Promise((resolve, reject) => {
 		var current_time = moment().unix()
 		jwt.sign({
-			    userEmail: userEmail,
+			    userPhone: userPhone,
 			    iat : current_time
 			}, 
 			secret_key, 
 			{
 	            expiresIn: '3m',
 	            issuer: 'amugong',
-	            subject: 'email_verification',
+	            subject: 'phone_verification',
 	        }, 
 			function(err, token) {
 				if(err) {reject(err); return;};
@@ -77,25 +77,29 @@ let signJWT = function(userEmail){
 }
 
 
-var sendAuthEmail = async function(req, res){
-	var userEmail = req.body.userID;
-	console.log(userEmail);
+var sendAuthLink = async function(req, res){
+	var userPhone = req.body.userID;
+	console.log(userPhone);
 	console.log(req.headers.host);
 
-	let token = await signJWT(userEmail);
+	let token = await signJWT(userPhone);
 
-	let link="http://"+req.headers.host+"/api/auth/email/verify/"+token;
-    let html = `<p>이메일 인증을 위해서 <a href="${link}">LINK</a> 이 링크를 클릭해주세요! 인증 유효기간은 3분입니다!</p> `;
+	let link="http://"+req.headers.host+"/api/auth/phone/verify/"+token;
+    let html = `<p>전화번호 인증을 위해서 <a href="${link}">LINK</a> 이 링크를 클릭해주세요! 인증 유효기간은 3분입니다!</p> `;
 
-    var sql = 'INSERT INTO TEMPUSER(userEmail) VALUES(?) ON DUPLICATE KEY UPDATE isVerified = 0 ';
+    var sql = 'INSERT INTO TEMPUSER(userPhone) VALUES(?) ON DUPLICATE KEY UPDATE isVerified = 0 ';
 	//var sql = 'SELECT * FROM users_customuser';
-	db.query(sql ,[userEmail] , async function (error, results, fields) {
-		if (error) throw error;
+	db.query(sql ,[userPhone] , async function (error, results, fields) {
+		if (error) res.status(500).send("fail");
+
+		////////////////////////////////////////////////
+		///////여기서 카카오톡 알림톡 API 로 링크 전송한다////////
+		////////////////////////////////////////////////
 
 		try{
 			let info = await transporter.sendMail({
 			    from: `"Amugong Team" <${smtp_config.user}>`,
-			    to: userEmail,
+			    to: "show981111@gmail.com",
 			    subject: 'Amugong 이메일 인증',
 			    html: html,
 		  	});
@@ -116,12 +120,12 @@ var verify_token = function(req, res){
     jwt.verify(req.params.token, secret_key, function(err, decoded) {
     	if(err) throw err
     	var current_time = moment().unix()
-    	var sql = 'UPDATE TEMPUSER SET isVerified = 1, issuedAt = ? WHERE userEmail = ?';
-    	db.query(sql ,[current_time, decoded.userEmail] , async function (error, results, fields) {
+    	var sql = 'UPDATE TEMPUSER SET isVerified = 1, issuedAt = ? WHERE userPhone = ?';
+    	db.query(sql ,[current_time, decoded.userPhone] , async function (error, results, fields) {
 			if (error) throw error;
 					
 			//console.log(results);
-			res.status(200).send("이메일 인증이 완료되었습니다! 어플에서 계속해주세요!");
+			res.status(200).send("전화번호 인증이 완료되었습니다! 어플에서 계속해주세요!");
 			
 		});
 		//console.log(decoded) // bar
@@ -136,7 +140,6 @@ var auto_login = function(req, res){
 	if(!req.headers.authorization.startsWith('Bearer ')) {
 		return res.status(403).json({ error: 'No credential' });
 	}
-	var post_userID = req.body.userID;
 
 	var token = req.headers.authorization;
 	token = token.slice(7, token.length).trimLeft();
@@ -144,16 +147,15 @@ var auto_login = function(req, res){
 	console.log(token);
 
     jwt.verify(token, secret_key, function(err, decoded) {
-    	if(err) throw err
-
-    	if(decoded.userID != post_userID){
-    		res.status(403).json({ error: 'Credential not match' });
-    		return;
-    	} 
-
+    	if(err){
+    		res.status(403).json("Forbidden");
+    	}
+    	console.log(decoded);
     	var sql = 'SELECT userID, name FROM USER WHERE userID = ? AND issuedAt = ?';
     	db.query(sql ,[decoded.userID, decoded.iat] , async function (error, results, fields) {
-			if (error) throw error;
+			if (error){
+				res.status(500).json("error");
+			}
 
 			if(results.length > 0){
 				res.status(200).json(results);
@@ -169,8 +171,8 @@ var auto_login = function(req, res){
 
 
 module.exports = {
-	checkEmailInput : checkEmailInput,
-	sendAuthEmail : sendAuthEmail,
+	checkPhoneInput : checkPhoneInput,
+	sendAuthLink : sendAuthLink,
 	verify_token : verify_token,
 	auto_login : auto_login
 };

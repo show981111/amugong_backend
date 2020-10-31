@@ -20,7 +20,9 @@ console.log('visit controller called');
 //enter/:branchID/:visitStartTime/:seatID/:num/:rsrv_startTime
 let enter = async function(req, res){
 	if(req.body.branchID == null ||req.body.seatID == null || req.body.isKing == null||
-		req.body.num == null ||req.body.rsrv_startTime == null ||req.body.rsrv_endTime == null)
+		req.body.num == null ||req.body.rsrv_startTime == null ||req.body.rsrv_endTime == null
+		||req.body.purchasedAt == null
+		)
 	{
 		res.status(400).send("null is included");
 		return;
@@ -28,8 +30,10 @@ let enter = async function(req, res){
 
 	var rsrv_startTime = moment(req.body.rsrv_startTime , 'YYYY-MM-DD HH:mm', true);
 	var rsrv_endTime = moment(req.body.rsrv_endTime , 'YYYY-MM-DD HH:mm', true);
+	var purchasedAt = moment(req.body.purchasedAt , 'YYYY-MM-DD HH:mm:ss', true);
 
-	if( moment(rsrv_startTime,'YYYY-MM-DD HH:mm').isValid() && moment(rsrv_endTime,'YYYY-MM-DD HH:mm').isValid()){
+	if( moment(rsrv_startTime,'YYYY-MM-DD HH:mm').isValid() && moment(rsrv_endTime,'YYYY-MM-DD HH:mm').isValid()
+		&& moment(purchasedAt,'YYYY-MM-DD HH:mm:ss').isValid()){
 		var visitStartTime = moment().format('YYYY-MM-DD HH:mm');
 		var gap = moment(visitStartTime,"YYYY-MM-DD HH:mm").diff(moment(rsrv_startTime,"YYYY-MM-DD HH:mm"));
 		var d = moment.duration(gap);
@@ -56,19 +60,20 @@ let enter = async function(req, res){
 						}
 
 						if(results.affectedRows >= 0){
-							// var endDateObj = moment(req.body.rsrv_endTime).toDate();
-							// var fiveBef = moment(req.body.rsrv_endTime, 'YYYY-MM-DD HH:mm').subtract(5, 'minutes');
-							// var tenBef = moment(req.body.rsrv_endTime, 'YYYY-MM-DD HH:mm').subtract(10, 'minutes');
+							
 							var fifBef = moment(req.body.rsrv_endTime, 'YYYY-MM-DD HH:mm').subtract(15, 'minutes');
-							// var befTen = schedule.scheduleJob(req.body.num + "bef10",tenBef.toDate(), function(data){
-							// 	console.log(data);
-							// 	//if not 퇴장 : 10분 전 알람 보내기
-							// 	//여기서 끝나는 시간이랑 현재시각 한번 체크해주기 
-							//   console.log('The world is going to end today. bef 10');//if not 퇴장 : 10분 전 알람 보내기
-							// }.bind(null,req.body));
 							console.log(fifBef.toDate());
 							var rule = new schedule.RecurrenceRule();
 							// rule.tz = 'Asia/Seoul'; 
+
+							//기존의 입장 전 알람과 입장 30분 뒤의 알림 삭제 
+							var scheduleID = req.token_userID+req.body.seatID+req.body.purchasedAt;
+							var enterCheckID = req.token_userID+req.body.seatID+req.body.purchasedAt+'enter';
+							var my_job = schedule.scheduledJobs[scheduleID];
+							var enter_job = schedule.scheduledJobs[enterCheckID];
+							if(my_job != undefined) my_job.cancel();
+							if(enter_job != undefined) enter_job.cancel();
+							//기존의 입장 전 알람과 입장 30분 뒤의 알림 삭제 
 
 							rule.minute = new schedule.Range(0, 59, 5);
 							var exitRecurAlaram = schedule.scheduleJob(req.body.num+ "out", { start: fifBef.toDate(), rule: rule }, function(data){
@@ -134,6 +139,7 @@ let exit = function(req, res){
 			var my_job = schedule.scheduledJobs[req.body.num + "af"];
 			if(my_job != undefined) my_job.cancel();
 			res.status(200).send("success");
+			//만약 킹이 나갔다면? 
 		}else{
 			res.status(400).send("not found");
 		}

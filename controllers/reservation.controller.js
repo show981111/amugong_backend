@@ -156,6 +156,7 @@ let isTimeAvailableForSeat = async function(startDateTime, endDateTime, seatID){
 }
 
 let reserveSeat = async function(req, res){//결제 시작하면 일단 예약 인서트 해준다 
+
 	var purchasedAt = moment().format('YYYY-MM-DD HH:mm:ss');
 	console.log(req.body);
 	var data = req.body;
@@ -187,7 +188,7 @@ let reserveSeat = async function(req, res){//결제 시작하면 일단 예약 �
 		if(redunt == 0){
 			var sql = `INSERT INTO RESERVATION(FK_RSRV_userID, FK_RSRV_seatID, startTime, endTime, purchasedAt)
 						VALUES(?,?,?,?,?)`;
-			var params = [sanitizeHtml(data.userID), sanitizeHtml(data.seatID), sanitizeHtml(data.startTime)
+			var params = [sanitizeHtml(req.token_userID), sanitizeHtml(data.seatID), sanitizeHtml(data.startTime)
 						, sanitizeHtml(data.endTime), purchasedAt];
 			db.query(sql, params, function(err, results){
 				if(err) {res.status(400).send(err);};
@@ -202,35 +203,39 @@ let reserveSeat = async function(req, res){//결제 시작하면 일단 예약 �
 					purchasedAt : purchasedAt
 				};
 
-				var checkPaymentDeadLine = moment(purchasedAt,'YYYY-MM-DD HH:mm:ss').add(3, data.endTime, 'minutes');
+				var checkPaymentDeadLine = moment(purchasedAt,'YYYY-MM-DD HH:mm:ss').add(3, 'minutes');
 				var paymentJob = schedule.scheduleJob(checkPaymentID , checkPaymentDeadLine.toDate(), function(data){
 					var sql = `UPDATE RESERVATION SET status = IF(isPaid=0,0,1) 
 						WHERE FK_RSRV_userID = ? AND FK_RSRV_seatID = ? AND purchasedAt = ?`;
-					var paramVal = [data.userID, data.seatID, data.purchasedAt];
+					var paramVal = [req.token_userID, data.seatID, data.purchasedAt];
 					db.query(sql, paramVal, function(err, results){
 						if(err) {
-							var id = data.userID+data.seatID+data.purchasedAt+'pay';
+							var id = req.token_userID+data.seatID+data.purchasedAt+'pay';
 							console.log(id ,err); 
 							return;
 						}
 					});//3분 뒤에도 pay가 안되어있다면 취소 
 				}.bind(null,schedule_info));
 
-				var cancelDeadLine = moment(data.endTime,'YYYY-MM-DD HH:mm').add(30, data.endTime, 'minutes');
+				var cancelDeadLine = moment(data.endTime,'YYYY-MM-DD HH:mm').add(30, 'minutes');
 				var alarmForCancel = schedule.scheduleJob(enterCheckID , cancelDeadLine.toDate(), function(data){
 					var sql = `UPDATE RESERVATION SET status = IF(real_start is null,0,1) WHERE 
 						FK_RSRV_userID = ? AND FK_RSRV_seatID = ? AND purchasedAt = ?`;
-					var paramVal = [data.userID, data.seatID, data.purchasedAt];
+					var paramVal = [req.token_userID, data.seatID, data.purchasedAt];
 					db.query(sql, paramVal, function(err, results){
 						if(err) {
-							var id = data.userID+data.seatID+data.purchasedAt+'pay';
+							var id = req.token_userID+data.seatID+data.purchasedAt+'pay';
 							console.log(id ,err); 
 							return;
 						}
 					});//예약 시작시간으로부터 30분 뒤에도 입장 안했으면 예약 취소
 				}.bind(null,schedule_info));
 
+				console.log(checkPaymentDeadLine);
+				console.log(cancelDeadLine);
 
+				var list = schedule.scheduledJobs;
+				console.log(list);	
 				res.status(200).json({status : "success", purchasedAt : purchasedAt});
 				// 여기서 끝나는 시간 30분 후에 스케쥴러 해서 그떄 real_start is NUll status = 1로 업데이트 
 			});
