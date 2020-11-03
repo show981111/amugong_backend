@@ -40,7 +40,7 @@ app.use(bodyParser.json());
 
 app.use('/api/user', userRouter);
 app.use('/api/auth', authRouter);
-// app.use('/api/map', checkJWT ,authRouter);
+// app.use('/api/map', checkJWT ,mapRouter);
 app.use('/api/map' ,mapRouter);
 app.use('/api/branch',branchRouter);
 app.use('/api/resources' ,resourcesRouter);

@@ -8,6 +8,9 @@ const authController = require('../controllers/auth.controller.js');
 router.use(bodyParser.urlencoded({extended:false}))
 router.use(bodyParser.json())
 
+router.post('/phone', authController.checkPhoneInput, authController.sendAuthLink)//해당 전화번호로 jwt 만들어서 링크 보냄 
+router.get('/phone/verify/:token', authController.verify_token)//토큰받아서 그 토큰 안에 전화번호는 TEMP verify 시킴
+router.get('/login',authController.auto_login)//토큰을 통한 자동 로그인 
 
 /**
  * @swagger
@@ -38,9 +41,7 @@ router.use(bodyParser.json())
  *       500:
  *         description : "DB 통신 오류 또는 카카오 메세지 전달 실패"
  */
-router.post('/phone', authController.checkPhoneInput, authController.sendAuthLink)//해당 전화번호로 jwt 만들어서 링크 보냄 
 
-router.get('/phone/verify/:token', authController.verify_token)//토큰받아서 그 토큰 안에 전화번호는 TEMP verify 시킴
 /**
  * @swagger
  * /auth/login:
@@ -70,7 +71,6 @@ router.get('/phone/verify/:token', authController.verify_token)//토큰받아서
  *       500:
  *         description : "DB 통신 오류 등등 "
  */
-router.get('/login',authController.auto_login)//토큰을 통한 자동 로그인 
 
 
 module.exports = router;

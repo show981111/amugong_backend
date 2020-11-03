@@ -52,6 +52,8 @@ router.post('/reset', userController.reset_password)
  *         description: "success"
  *       400:
  *         description: "전화번호 형식 오류 또는 데이터 누락"
+ *       403:
+ *         description: "전화번호 인증이 안됨"
  *       500:
  *         description : "기타 DB 통신 오류 또는 비밀번호 암호화 오류"
  */

@@ -26,16 +26,24 @@ var showMap = async function(req,res){
 	// }
 	
 	var token = req.headers.authorization;
-	var token = "not";
+	var token  = "not";
 	//token = token.slice(7, token.length).trimLeft();
 
 	var lat = req.params.lat;
 	var long = req.params.long;
 	var startDateTime = req.params.startDateTime;
 	var endDateTime = req.params.endDateTime;	
-	
+	var input;
+	if(startDateTime == undefined || endDateTime == undefined){
+		input = {ID:naver_map.CLIENT_ID, firstLat : lat , firstLong : long, token: token};
+	}else{
+		input = {ID:naver_map.CLIENT_ID, firstLat : lat , firstLong : long, token: token,
+						startDateTime : startDateTime ,endDateTime : endDateTime};
+	}
+	console.log(startDateTime);
+	console.log(endDateTime);
 	res.render('map',{ID:naver_map.CLIENT_ID, firstLat : lat , firstLong : long, token: token,
-						startDateTime :startDateTime ,endDateTime : endDateTime}) ;
+						startDateTime : startDateTime ,endDateTime : endDateTime}) ;
 }
 
 

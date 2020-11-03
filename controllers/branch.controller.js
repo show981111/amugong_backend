@@ -16,7 +16,7 @@ app.use(bodyParser.json())
 
 console.log('Branch controller called');
 
-let getBranchList = function(req, res){
+let getBranchList = function(req, res){//lat 이랑 long 만 가지고 branch 얻기 
 	
 	var sql = 'SELECT * FROM BRANCH';
 	db.query(sql, function(err, results){
@@ -24,6 +24,23 @@ let getBranchList = function(req, res){
 
 		res.status(200).json(results);	
 	})
+}
+let getBranchListInBoxWithoutTime = function(req , res){
+	var minlat = req.params.minlat;
+	var minlong = req.params.minlong;
+	var maxlat = req.params.maxlat;
+	var maxlong = req.params.maxlong;
+
+	var sql = `SELECT br.* , DATE_FORMAT(bh.businessHourStart, '%H:%i') AS businessHourStart, 
+				DATE_FORMAT(bh.businessHourEnd, '%H:%i') AS businessHourEnd, bh.dow
+				FROM amugong_db.BRANCH br
+ 				LEFT JOIN amugong_db.BUSINESSHOUR bh ON br.branchID = bh.FK_BHOUR_branchID
+ 				WHERE lat >= ? AND lng >= ? AND lat <= ? AND lng <= ? order by br.branchID`;
+	var params = [minlat, minlong, maxlat, maxlong];
+	
+	// var sql = 'SELECT * FROM BRANCH WHERE lat >= ? AND lng >= ? AND lat <= ? AND lng <= ? ';
+	// var params = [minlat, minlong, maxlat, maxlong] ;
+	makeBranchJsonOb(sql,params, res);
 }
 
 let getBranchListInBox = function(req, res){
@@ -45,20 +62,6 @@ let getBranchListInBox = function(req, res){
 	var startTime = moment(startDateTime).format("HH:mm");
 	var endTime = moment(endDateTime).format("HH:mm");
 	var dow = moment(startDateTime).day();
-	console.log(startTime);
-	console.log(endTime);
-	console.log(dow);
-
-	// var current_time = moment().format('YYYY-MM-DD HH:mm');
-	// console.log(current_time);
-
-	// var sql = `SELECT DISTINCT br.*,  COUNT(rsrv.num) AS num FROM BRANCH br
-	// 	LEFT JOIN SEAT AS st on (st.FK_SEAT_branchID = br.branchID) 
-	// 	LEFT JOIN RESERVATION AS rsrv ON (rsrv.startTime <= ? AND 
-	//     rsrv.endTime >?) AND (rsrv.FK_RSRV_seatID = st.seatID)
-	//     WHERE br.lat >= ? AND br.lng >= ? AND br.lat <= ? AND br.lng <= ?
-	//     GROUP BY br.branchID;`;
-	// var params = [current_time,current_time,minlat, minlong, maxlat, maxlong];
 
 	var sql = `SELECT br.*, DATE_FORMAT(bh1.businessHourStart, '%H:%i') AS businessHourStart, 
 					DATE_FORMAT(bh1.businessHourEnd, '%H:%i') AS businessHourEnd, 
@@ -75,8 +78,12 @@ let getBranchListInBox = function(req, res){
 	
 	// var sql = 'SELECT * FROM BRANCH WHERE lat >= ? AND lng >= ? AND lat <= ? AND lng <= ? ';
 	// var params = [minlat, minlong, maxlat, maxlong] ;
+	makeBranchJsonOb(sql,params, res);
+}
+
+let makeBranchJsonOb = function(sql,params,res){
 	db.query(sql,params ,function(err, results){
-		if(err) throw err;
+		if(err) res.status(500).send(err);
 		console.log();
 		var prevID = -1 ;
 		var index = 0;
@@ -115,5 +122,6 @@ let getBranchListInBox = function(req, res){
 
 module.exports = {
 	getBranchList : getBranchList,
-	getBranchListInBox : getBranchListInBox
+	getBranchListInBox : getBranchListInBox,
+	getBranchListInBoxWithoutTime : getBranchListInBoxWithoutTime
 };

@@ -24,8 +24,8 @@
 
 	var firstLat = <%= firstLat %>;
 	var firstLong = <%= firstLong %>;
-	var startDateTime = <%= startDateTime %>;
-	var endDateTime = <%= endDateTime %>;
+	var startDateTime = "<%= startDateTime %>";
+	var endDateTime ="<%= endDateTime %>";
 
 	var mapOptions = {
 	    center: new naver.maps.LatLng(firstLat,firstLong ),
@@ -44,8 +44,13 @@
 		var minlng = mapBounds._sw._lng;
 		var maxlat = mapBounds._ne._lat;
 		var maxlng = mapBounds._ne._lng;
+		var url = "http://3.34.91.138:8000/api/branch/"+minlat+"/"+minlng+"/"+maxlat+"/"+maxlng+ '/' +startDateTime + '/'+endDateTime;
+		if(!startDateTime || !endDateTime ){
+			console.log("sth is null");
+			url = "http://3.34.91.138:8000/api/branch/"+minlat+"/"+minlng+"/"+maxlat+"/"+maxlng;
+		}
 		jQuery.ajax({
-	        url: "http://3.34.91.138:8000/api/branch/"+minlat+"/"+minlng+"/"+maxlat+"/"+maxlng+ '/' +startDateTime + '/'+endDateTime,
+	        url: url,
 	        beforeSend: function (xhr) {
 			    xhr.setRequestHeader ("Authorization", "Bearer " +  "<%= token %>");
 			},
