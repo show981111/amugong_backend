@@ -37,7 +37,7 @@ app.use(bodyParser.urlencoded({extended:true}));
 app.use(bodyParser.json());
 
 
-app.use('/api/v1/user', userRouter);
+app.use('/api/user', userRouter);
 app.use('/api/auth', authRouter);
 // app.use('/api/map', checkJWT ,mapRouter);
 app.use('/api/map' ,mapRouter);
