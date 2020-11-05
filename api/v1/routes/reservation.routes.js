@@ -11,8 +11,8 @@ router.get('/:term', reservationController.getMyReservation);
 router.get('/seat/:branchID/:startTime/:endTime', reservationController.checkFilterInput, reservationController.getSeatStateList);
 router.delete('/:num', reservationController.deleteReservation);
 router.post('/seat', reservationController.reserveSeat);
-router.put('/extend/', reservationController.extendReservation);
-router.put('/paid/', reservationController.updatePaidStatus);
+// router.put('/extend/', reservationController.extendReservation);
+// router.put('/paid/', reservationController.updatePaidStatus);
 module.exports = router;
 /**
  * @swagger
@@ -212,7 +212,7 @@ module.exports = router;
  *       404:
  *         description: "해당 시간 예약 불가(이미 차있거나 영업시간이 아닌 경우)"
  *       500:
- *         description : "기타 DB 통신 오류 또는 비밀번호 암호화 오류"
+ *         description : "기타 DB 통신 오류 및 서버 에러"
  */
 
 

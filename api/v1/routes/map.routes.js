@@ -7,7 +7,6 @@ const mapController = require('../controllers/map.controller.js');
 router.use(bodyParser.urlencoded({extended:false}))
 router.use(bodyParser.json())
 
-
 router.get('/:lat/:long',mapController.showMap)
 router.get('/:lat/:long/:startDateTime/:endDateTime',mapController.showMap)
 /**

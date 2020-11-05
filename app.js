@@ -7,6 +7,7 @@ const bodyParser = require('body-parser');
 const http = require('http');
 // const socketio = require('socket.io');
 app.set('view engine', 'ejs');
+const helmet = require("helmet");
 var port = require('./api/v1/config/port.json');
 var userRouter = require('./api/v1/routes/user.routes.js');
 var authRouter = require('./api/v1/routes/auth.routes.js');
@@ -28,25 +29,22 @@ const swaggerOptions = {
 	},
 	apis : ["./api/v1/routes/*.js"]
 };
+app.use(express.static(path.join(__dirname, 'public')));
 
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
-
-console.log("hello");
-app.use(express.static(path.join(__dirname, 'public')));
-app.use(bodyParser.urlencoded({extended:true}));
-app.use(bodyParser.json());
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+// app.use('/api/map', checkJWT ,mapRouter);
+app.use('/api/map' ,mapRouter);
+app.use(helmet());
 
 
 app.use('/api/user', userRouter);
 app.use('/api/auth', authRouter);
-// app.use('/api/map', checkJWT ,mapRouter);
-app.use('/api/map' ,mapRouter);
 app.use('/api/branch',branchRouter);
 app.use('/api/resources' ,resourcesRouter);
 app.use('/api/reservation' , checkJWT,reservationRouter);
 app.use('/api/visit', checkJWT, visitRouter);
 //app.use('/api/branch' ,checkJWT,branchRouter);
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 
 app.listen(port, () => {
