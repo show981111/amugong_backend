@@ -18,13 +18,18 @@ console.log('Branch controller called');
 
 let getBranchList = function(req, res){//lat 이랑 long 만 가지고 branch 얻기 
 	
-	var sql = 'SELECT * FROM BRANCH';
-	db.query(sql, function(err, results){
-		if(err) throw err;
+	//var sql = 'SELECT * FROM BRANCH';
 
-		res.status(200).json(results);	
-	})
+	var sql = `SELECT br.* , DATE_FORMAT(bh.businessHourStart, '%H:%i') AS businessHourStart, 
+				DATE_FORMAT(bh.businessHourEnd, '%H:%i') AS businessHourEnd, bh.dow
+				FROM amugong_db.BRANCH br
+ 				LEFT JOIN amugong_db.BUSINESSHOUR bh ON br.branchID = bh.FK_BHOUR_branchID order by br.branchID`;
+ 	var params = [];
+ 	makeBranchJsonOb(sql,params ,res);
+	
 }
+
+
 let getBranchListInBoxWithoutTime = function(req , res){
 	var minlat = req.params.minlat;
 	var minlong = req.params.minlong;

@@ -86,6 +86,9 @@ let enter = async function(req, res){
 						}else{
 							console.log(diff,'분 후 입니다.');
 						}
+						/////////////////////////////////////////////
+						///여기서 real_end 가 null 인지 체크하고 푸쉬 띄움 //
+						/////////////////////////////////////////////
 						console.log('alarm Time ',alarmTime);
 						console.log('diff ',diff);
 						console.log(data);

@@ -8,7 +8,7 @@ router.use(bodyParser.urlencoded({extended:false}))
 router.use(bodyParser.json())
 
 
-// router.get('/', branchController.getBranchList);//위도 경도만으로 찾을수 있게 만들자~ 
+router.get('/', branchController.getBranchList);//위도 경도만으로 찾을수 있게 만들자~ 
 router.get('/:minlat/:minlong/:maxlat/:maxlong/', branchController.getBranchListInBoxWithoutTime);
 router.get('/:minlat/:minlong/:maxlat/:maxlong/:startTime/:endTime', branchController.getBranchListInBox);
 
@@ -234,6 +234,45 @@ router.get('/:minlat/:minlong/:maxlat/:maxlong/:startTime/:endTime', branchContr
  *                            "dow": "1,3,5,6,0"
  *                        }
  *                    ]
+ *                }
+ *             }
+ *       403:
+ *         description: "토큰 인증 실패"
+ *       500:
+ *         description: "기타 DB 통신 오류"
+ * /branch:
+ *   get:
+ *     summary: 전체 지점 리스트 얻어옴 
+ *     tags: [Branch]
+ *     parameters:
+ *       - in: header
+ *         type: http
+ *         scheme: bearer
+ *         name: Authorization
+ *         description : 
+ *           Bearer Auth
+ *     responses:
+ *       200:
+ *         description: "지점 정보(key: 지점 아이디, value: 지점)"
+ *         examples:
+ *           application/json:
+ *             {
+ *                "1": {
+ *                    "branchID": 1,
+ *                    "branchName": "studyB",
+ *                    "lat": 37.45,
+ *                    "lng": 127.02311,
+ *                    "address": "b",
+ *                    "branchIntro": "This is Branch B",
+ *                    "totalSeat": 0,
+ *                    "curNum": 0,
+ *                    "businessHour": [
+ *                        {
+ *                             "businessHourStart": "10:00",
+ *                             "businessHourEnd": "23:59",
+ *                             "dow": "1,2,3,4,5,6"
+ *                         }
+ *                     ]
  *                }
  *             }
  *       403:

@@ -196,9 +196,11 @@ let reserveSeat = async function(req, res){//결제 시작하면 일단 예약 �
 			db.query(sql, params, function(err, results){
 				if(err) {res.status(500).send(err);};
 
-				/*
-				var checkPaymentID = req.token_userID+data.seatID+purchasedAt+'pay';//3분까지 결제 데드라인 
+				
+				//var checkPaymentID = req.token_userID+data.seatID+purchasedAt+'pay';//3분까지 결제 데드라인 
+				/////////////////////FCM TODO //////////////////////////
 				// var scheduleID = req.token_userID+data.seatID+purchasedAt+'alarm';//시작하기 5분 10분 전 알림 
+				/////////////////////FCM TODO //////////////////////////
 				var enterCheckID = req.token_userID+req.body.seatID+purchasedAt+'enter';//시작하고 나서 30분 뒤에도 안오면 취
 
 				var schedule_info = {
@@ -207,19 +209,19 @@ let reserveSeat = async function(req, res){//결제 시작하면 일단 예약 �
 					purchasedAt : purchasedAt
 				};
 
-				var checkPaymentDeadLine = moment(purchasedAt,'YYYY-MM-DD HH:mm:ss').add(3, 'minutes');
-				var paymentJob = schedule.scheduleJob(checkPaymentID , checkPaymentDeadLine.toDate(), function(data){
-					var sql = `UPDATE RESERVATION SET status = IF(isPaid=0,0,1) 
-						WHERE FK_RSRV_userID = ? AND FK_RSRV_seatID = ? AND purchasedAt = ?`;
-					var paramVal = [req.token_userID, data.seatID, data.purchasedAt];
-					db.query(sql, paramVal, function(err, results){
-						if(err) {
-							var id = req.token_userID+data.seatID+data.purchasedAt+'pay';
-							console.log(id ,err); 
-							return;
-						}
-					});//3분 뒤에도 pay가 안되어있다면 취소 
-				}.bind(null,schedule_info));
+				// var checkPaymentDeadLine = moment(purchasedAt,'YYYY-MM-DD HH:mm:ss').add(3, 'minutes');
+				// var paymentJob = schedule.scheduleJob(checkPaymentID , checkPaymentDeadLine.toDate(), function(data){
+				// 	var sql = `UPDATE RESERVATION SET status = IF(isPaid=0,0,1) 
+				// 		WHERE FK_RSRV_userID = ? AND FK_RSRV_seatID = ? AND purchasedAt = ?`;
+				// 	var paramVal = [req.token_userID, data.seatID, data.purchasedAt];
+				// 	db.query(sql, paramVal, function(err, results){
+				// 		if(err) {
+				// 			var id = req.token_userID+data.seatID+data.purchasedAt+'pay';
+				// 			console.log(id ,err); 
+				// 			return;
+				// 		}
+				// 	});//3분 뒤에도 pay가 안되어있다면 취소 
+				// }.bind(null,schedule_info));
 
 				var cancelDeadLine = moment(data.endTime,'YYYY-MM-DD HH:mm').add(30, 'minutes');
 				var alarmForCancel = schedule.scheduleJob(enterCheckID , cancelDeadLine.toDate(), function(data){
@@ -240,7 +242,7 @@ let reserveSeat = async function(req, res){//결제 시작하면 일단 예약 �
 
 				var list = schedule.scheduledJobs;
 				console.log(list);	
-				*/
+				
 				res.status(200).json({status : "success", purchasedAt : purchasedAt});
 				// 여기서 끝나는 시간 30분 후에 스케쥴러 해서 그떄 real_start is NUll status = 1로 업데이트 
 			});

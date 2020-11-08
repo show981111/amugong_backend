@@ -15,7 +15,7 @@ router.get('/', (req, res) => {//특정유저 얻기
 })
 router.post('/register', userController.checkRegisterInput, userController.registerUser)
 router.post('/login',userController.checkLoginInput, userController.loginUser)
-router.post('/reset', userController.reset_password)
+router.put('/reset', userController.reset_password)
 
 /**
  * @swagger
@@ -103,7 +103,7 @@ router.post('/reset', userController.reset_password)
  *       500:
  *         description : "기타 DB 통신 오류"
  * /user/reset:
- *   post:
+ *   put:
  *     summary: 비밀번호 리셋
  *     tags: [User]
  *     consumes:
