@@ -59,16 +59,16 @@ let getSeatStateList = async function(req, res){//change needed
 	//rsrv.startTime < [real_end(과거) < startDate(미래) < rsrv.endTime(미래)] 이라면 예약 가능 
 	var sql = `SELECT seat.FK_SEAT_branchID, seat.seatID, DATE_FORMAT(rsrv.startTime, '%Y-%m-%d %H:%i') AS startTime,
 		 	 DATE_FORMAT(rsrv.endTime, '%Y-%m-%d %H:%i') AS endTime, DATE_FORMAT(rsrv.real_start, '%Y-%m-%d %H:%i') AS real_start,
-		 	 DATE_FORMAT(rsrv.real_end, '%Y-%m-%d %H:%i') AS real_end, rsrv.FK_RSRV_userID , rsrv.num
+		 	 DATE_FORMAT(rsrv.real_end, '%Y-%m-%d %H:%i') AS real_end, rsrv.FK_RSRV_userID , rsrv.num, seat.plug
 		 	 FROM amugong_db.SEAT seat
 			LEFT JOIN amugong_db.RESERVATION AS rsrv ON 
 			((STR_TO_DATE(?,'%Y-%m-%d %H:%i') <= rsrv.startTime AND
 			 rsrv.startTime < STR_TO_DATE(? ,'%Y-%m-%d %H:%i')) OR 
 			(STR_TO_DATE(?,'%Y-%m-%d %H:%i') < rsrv.endTime AND 
 			rsrv.endTime <= STR_TO_DATE(?,'%Y-%m-%d %H:%i')) )
-		    AND (rsrv.FK_RSRV_seatID = seat.seatID ) AND real_end is NULL 
+		    AND (rsrv.FK_RSRV_seatID = seat.seatID ) AND (real_end is NULL OR real_end = 0)
 	        AND rsrv.status = '1'
-		    WHERE seat.FK_SEAT_branchID = ?`;
+		    WHERE seat.FK_SEAT_branchID = ? order by seat.seatID`;
 	    //현재 사용중인 자리를 보여줌.  real_end !=NULL 이라면 무조건 사용 가능! 
 	db.query(sql,[startDateTime, endDateTime,startDateTime, endDateTime,id ] ,function(err, results){
 		if(err) {
@@ -237,8 +237,8 @@ let reserveSeat = async function(req, res){//결제 시작하면 일단 예약 �
 					});//예약 시작시간으로부터 30분 뒤에도 입장 안했으면 예약 취소
 				}.bind(null,schedule_info));
 
-				console.log(checkPaymentDeadLine);
-				console.log(cancelDeadLine);
+				// console.log(checkPaymentDeadLine);
+				// console.log(cancelDeadLine);
 
 				var list = schedule.scheduledJobs;
 				console.log(list);	

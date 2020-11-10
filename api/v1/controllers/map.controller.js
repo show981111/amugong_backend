@@ -18,12 +18,6 @@ console.log('map controller called');
 
 
 var showMap = async function(req,res){
-	// if (!req.headers.authorization) {
-	//     return res.status(403).json({ error: 'No credential' });
-	// }
-	// if(!req.headers.authorization.startsWith('Bearer ')) {
-	// 	return res.status(403).json({ error: 'No credential' });
-	// }
 	
 	var token = req.headers.authorization;
 	var token  = "not";
@@ -46,8 +40,16 @@ var showMap = async function(req,res){
 						startDateTime : startDateTime ,endDateTime : endDateTime}) ;
 }
 
+let showBranchLocationMap = async function(req, res){
+
+	var lat = req.params.lat;
+	var long = req.params.long;
+	res.render('branchLocationMap',{ ID:naver_map.CLIENT_ID, firstLat : lat , firstLong : long }) ;
+}
+
 
 
 module.exports = {
-	showMap : showMap
+	showMap : showMap,
+	showBranchLocationMap : showBranchLocationMap
 };

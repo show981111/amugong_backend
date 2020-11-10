@@ -11,11 +11,11 @@ router.use(bodyParser.json())
 
 router.get('/:branchID/:key',resourcesController.downloadImage)
 router.get('/:branchID',resourcesController.getImageKeyList)
-router.post('/upload',resourcesController.upload.array('branchImage' , 10) ,resourcesController.uploadImage)
+router.post('/upload', resourcesController.upload.array('branchImage' , 10) ,resourcesController.uploadImage)
 
 /**
  * @swagger
- * /resource/{branchID}/:
+ * /resources/{branchID}/:
  *   get:
  *     summary: 해당 지점의 사진의 키값들 리스트를 가져온다
  *     tags: [Resource]
@@ -47,7 +47,7 @@ router.post('/upload',resourcesController.upload.array('branchImage' , 10) ,reso
  *         description: "토큰 인증 실패"
  *       "기타": 
  *         description: "Amazon S3 통신 오류 'https://docs.aws.amazon.com/AmazonS3/latest/API/ErrorResponses.html#ErrorCodeList'"
- * /resource/{branchID}/{key}:
+ * /resources/{branchID}/{key}:
  *   get:
  *     summary: 해당 지점의, 해당 키에 해당하는 사진 다운로드 
  *     tags: [Resource]

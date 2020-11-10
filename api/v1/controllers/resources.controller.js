@@ -37,9 +37,14 @@ var upload = multer({
         s3: s3,
         bucket: BUCKET_NAME,
         key: function (req, file, cb) {
-            console.log(req.body);
+          console.log(req);
+            console.log("req body upload ",req.body);
             console.log(file);
-            cb(null, 'images/'+req.body.branchID+'/'+file.originalname); //use Date.now() for unique file keys
+            var keyName = file.originalname;
+            if(req.body.imageName != null){
+              keyName = req.body.imageName;
+            }
+            cb(null, 'images/'+req.body.branchID+'/'+keyName); //use Date.now() for unique file keys
         }
     })
 });

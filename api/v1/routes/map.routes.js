@@ -9,6 +9,8 @@ router.use(bodyParser.json())
 
 router.get('/:lat/:long',mapController.showMap)
 router.get('/:lat/:long/:startDateTime/:endDateTime',mapController.showMap)
+router.get('/branch/:lat/:long',mapController.showBranchLocationMap)
+
 /**
  * @swagger
  * /map/{lat}/{long}/{startDateTime}/{endDateTime}:
