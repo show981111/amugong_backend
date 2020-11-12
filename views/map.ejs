@@ -18,6 +18,8 @@
 	// var markers = []; 
 	// var markerListener; 
 	// var branchList;
+	var defaultLat = 37;
+	var defaultLong = 127;
 
 	var markers = new Object();
 	var markerListener = new Object();
@@ -103,6 +105,7 @@
 		Print.postMessage('set location called' + lat + " / " + long);
 		var new_position = new naver.maps.LatLng(lat, long);
     	user_marker.setPosition(new_position);
+    	map.panTo(user_marker.getPosition());
     }
 
 	naver.maps.Event.addListener(user_marker, 'click', function(e){
@@ -132,6 +135,12 @@
 	//         }
 	//     }
 	// }
+
+	function goToDefault(){
+		Print.postMessage('set location called' + defaultLat + " / " + defaultLong);
+		map.panTo(new naver.maps.LatLng(defaultLat, defaultLong));
+	}
+
 
 	function goToCurrent(){
 		map.panTo(user_marker.getPosition());

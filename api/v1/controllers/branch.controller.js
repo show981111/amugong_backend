@@ -169,5 +169,5 @@ let makeBranchJsonOb = function(sql,params){
 module.exports = {
 	getBranchList : getBranchList,
 	getBranchListInBox : getBranchListInBox,
-	getBranchListInBoxWithoutTime : getBranchListInBoxWithoutTime,
+	getBranchListInBoxWithoutTime : getBranchListInBoxWithoutTime
 };

@@ -59,7 +59,7 @@ let getSeatStateList = async function(req, res){//change needed
 	//rsrv.startTime < [real_end(과거) < startDate(미래) < rsrv.endTime(미래)] 이라면 예약 가능 
 	var sql = `SELECT seat.FK_SEAT_branchID, seat.seatID, DATE_FORMAT(rsrv.startTime, '%Y-%m-%d %H:%i') AS startTime,
 		 	 DATE_FORMAT(rsrv.endTime, '%Y-%m-%d %H:%i') AS endTime, DATE_FORMAT(rsrv.real_start, '%Y-%m-%d %H:%i') AS real_start,
-		 	 DATE_FORMAT(rsrv.real_end, '%Y-%m-%d %H:%i') AS real_end, rsrv.FK_RSRV_userID , rsrv.num, seat.plug
+		 	 DATE_FORMAT(rsrv.real_end, '%Y-%m-%d %H:%i') AS real_end, rsrv.FK_RSRV_userID , rsrv.num, seat.plug, seat.seatIndex
 		 	 FROM amugong_db.SEAT seat
 			LEFT JOIN amugong_db.RESERVATION AS rsrv ON 
 			((STR_TO_DATE(?,'%Y-%m-%d %H:%i') <= rsrv.startTime AND
@@ -315,7 +315,7 @@ let deleteReservation = function(req, res){
 
 
 let getMyReservation = function(req, res){
-	if(req.params.term == undefined || req.token_userID == undefined){
+	if(req.params.term == undefined || req.token_userID == undefined || req.params.option == undefined){
 		res.status(500).send("not enough data");
 		return;
 	}
@@ -323,11 +323,32 @@ let getMyReservation = function(req, res){
 	if(moment(curTerm, 'YYYY-MM').isValid()){
 		var curMonth = moment(curTerm).format('MM');
 		var curYear = moment(curTerm).format('YYYY');
-		var sql = `SELECT *, DATE_FORMAT(startTime, '%Y-%m-%d %H:%i') AS startTime, DATE_FORMAT(endTime, '%Y-%m-%d %H:%i') AS endTime,
-					DATE_FORMAT(real_start, '%Y-%m-%d %H:%i') AS real_start, DATE_FORMAT(real_end, '%Y-%m-%d %H:%i') AS real_end,
-					DATE_FORMAT(purchasedAt, '%Y-%m-%d %H:%i') AS purchasedAt
-				 	FROM RESERVATION WHERE MONTH(startTime) = ? AND YEAR(startTime) = ? AND 
-					FK_RSRV_userID = ?`;
+		var sql;
+		if(req.params.option = 'unused'){
+			sql = `SELECT rsrv.num, rsrv.FK_RSRV_userID,rsrv.FK_RSRV_seatID , DATE_FORMAT(rsrv.startTime, '%Y-%m-%d %H:%i') AS startTime, DATE_FORMAT(rsrv.endTime, '%Y-%m-%d %H:%i') AS endTime,
+				DATE_FORMAT(rsrv.real_start, '%Y-%m-%d %H:%i') AS real_start, DATE_FORMAT(rsrv.real_end, '%Y-%m-%d %H:%i') AS real_end,
+				DATE_FORMAT(rsrv.purchasedAt, '%Y-%m-%d %H:%i:%s') AS purchasedAt, rsrv.isKing, rsrv.merchant_uid, rsrv.status, rsrv.isPaid ,seat.FK_SEAT_branchID, br.branchName, seat.seatIndex
+				FROM amugong_db.RESERVATION rsrv LEFT JOIN amugong_db.SEAT seat
+		        ON rsrv.FK_RSRV_seatID = seat.seatID LEFT JOIN amugong_db.BRANCH br
+		        ON seat.FK_SEAT_branchID =  br.branchID
+		        WHERE MONTH(startTime) = ? AND YEAR(startTime) = ? AND (rsrv.real_end is null OR rsrv.real_end = 0) AND 
+				FK_RSRV_userID = ? order by rsrv.startTime DESC`;
+		}else{
+			sql = `SELECT rsrv.num, rsrv.FK_RSRV_userID,rsrv.FK_RSRV_seatID , DATE_FORMAT(rsrv.startTime, '%Y-%m-%d %H:%i') AS startTime, DATE_FORMAT(rsrv.endTime, '%Y-%m-%d %H:%i') AS endTime,
+				DATE_FORMAT(rsrv.real_start, '%Y-%m-%d %H:%i') AS real_start, DATE_FORMAT(rsrv.real_end, '%Y-%m-%d %H:%i') AS real_end,
+				DATE_FORMAT(rsrv.purchasedAt, '%Y-%m-%d %H:%i:%s') AS purchasedAt, rsrv.isKing, rsrv.merchant_uid, rsrv.status, rsrv.isPaid ,seat.FK_SEAT_branchID, br.branchName, seat.seatIndex
+				FROM amugong_db.RESERVATION rsrv LEFT JOIN amugong_db.SEAT seat
+		        ON rsrv.FK_RSRV_seatID = seat.seatID LEFT JOIN amugong_db.BRANCH br
+		        ON seat.FK_SEAT_branchID =  br.branchID
+		        WHERE MONTH(startTime) = ? AND YEAR(startTime) = ? AND 
+				FK_RSRV_userID = ? order by rsrv.startTime DESC`;
+		}
+	
+		// var sql = `SELECT *, DATE_FORMAT(startTime, '%Y-%m-%d %H:%i') AS startTime, DATE_FORMAT(endTime, '%Y-%m-%d %H:%i') AS endTime,
+		// 			DATE_FORMAT(real_start, '%Y-%m-%d %H:%i') AS real_start, DATE_FORMAT(real_end, '%Y-%m-%d %H:%i') AS real_end,
+		// 			DATE_FORMAT(purchasedAt, '%Y-%m-%d %H:%i') AS purchasedAt
+		// 		 	FROM RESERVATION WHERE MONTH(startTime) = ? AND YEAR(startTime) = ? AND 
+		// 			FK_RSRV_userID = ?`;
 		var params = [curMonth, curYear, req.token_userID];
 
 		db.query(sql, params, function(err,results){

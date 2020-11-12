@@ -8,7 +8,8 @@ User.prototype.validateUserInput = function(){
 
     if("userID" in this.data)
 	{
-		if(phoneRegex.test(this.data.userID) && this.data.userID.length == 11){
+		if(phoneRegex.test(this.data.userID) && this.data.userID.length == 11 && 
+			(this.data.userID.substring(0,3) == "010" || this.data.userID.substring(0,3) == "011") ){
 		
 		}else{
 			this.errors.push("ID is not PhoneNumber");

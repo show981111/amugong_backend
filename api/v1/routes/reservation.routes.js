@@ -7,7 +7,7 @@ const reservationController = require('../controllers/reservation.controller.js'
 router.use(bodyParser.urlencoded({extended:false}))
 router.use(bodyParser.json())
 
-router.get('/:term', reservationController.getMyReservation);
+router.get('/:term/:option', reservationController.getMyReservation);
 router.get('/seat/:branchID/:startTime/:endTime', reservationController.checkFilterInput, reservationController.getSeatStateList);
 router.delete('/:num', reservationController.deleteReservation);
 router.post('/seat', reservationController.reserveSeat);

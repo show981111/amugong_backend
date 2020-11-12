@@ -23,7 +23,7 @@ let enter = async function(req, res){
 		||req.body.rsrv_endTime == null ||req.body.purchasedAt == null || req.body.seatID == null
 		)
 	{
-		res.status(400).send("null is included");
+		res.status(500).send("null is included");
 		return;
 	}
 
@@ -37,8 +37,7 @@ let enter = async function(req, res){
 		var gap = moment(visitStartTime,"YYYY-MM-DD HH:mm").diff(moment(rsrv_startTime,"YYYY-MM-DD HH:mm"));
 		var d = moment.duration(gap);
 		var diff = d.asMinutes();
-		console.log(visitStartTime);
-		console.log(diff);
+		
 		if(diff > -5 && diff <= 30){
 			// var isSeatBranchMatch = `SELECT * FROM SEAT WHERE seatID = ? AND FK_SEAT_branchID = ?`;
 			// db.query(isSeatBranchMatch, [req.body.seatID,req.body.branchID], function(err, results){
@@ -109,10 +108,12 @@ let enter = async function(req, res){
 			// 	}
 			// })
 		}else{
+			// console.log("Time Over");
+			// console.log(res);
 			res.status(400).send("Time Over");
 		}
 	}else{
-		res.status(400).send("format error");
+		res.status(500).send("format error");
 	}
 }
 

@@ -147,9 +147,9 @@ let registerUser = async function(req, res){
 	var params = [sanitizeHtml(req.body.userID), sanitizeHtml(req.body.name), hashedPW, req.body.token, salt];
 
 	findUserByID(req.body.userID, function (error, results, fields) {
-	  if (error) throw error;
+	  if (error) res.status(500).send(err);;
 	  if(results.length > 0){
-	  	res.status(500).send('redundant');
+	  	res.status(404).send('redundant');
 	  }else{
 	  	db.query(sql , params ,function (error, results, fields) {
 		  if (error) throw error;
@@ -245,7 +245,7 @@ let loginUser = async function(req, res){//token을 발급해준다
 			res.status(500).send(value);
 		}
 	})
-	.catch(error => res.status(500).send(error));
+	.catch(error => res.status(403).send(error));
 	//var sql = 'SELECT * FROM users_customuser';
 	
 }
