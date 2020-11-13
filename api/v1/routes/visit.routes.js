@@ -11,6 +11,8 @@ router.use(bodyParser.json())
 
 router.put('/enter',visitController.enter);
 router.put('/exit',visitController.exit);
+router.put('/send',visitController.sendNoti);
+
 // router.get('/king/:branchID',visitController.isKingAvailable);
 
 // 입장 : 유저가 큐알을 찍으면, 그 큐알에서 branchID 추출, 그리고 유저가 찍을때 seatID 와 visitStartTime, num, rsrv_startTime 추출

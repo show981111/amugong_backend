@@ -23,7 +23,6 @@ app.use(bodyParser.json())
 console.log('controller called');
 
 var checkLoginInput =  function(req,res,next){
-	console.log(req.params);
 	var data;
 	if (req.method == "POST") {
        data = req.body;
@@ -215,13 +214,35 @@ let signJWT = function(userInfo){
 	})
 }
 
+let updateToken = function(userID, pushToken){
+	var sql = 'UPDATE USER SET token = ? WHERE userID = ?';
+	console.log(pushToken);
+	return new Promise(function(resolve, reject){
+		db.query(sql, [pushToken, userID], function(err, results, fields){
+			if(err) {
+				reject(err);
+				console.log(err);
+				return;
+			}
+			if(results != null && results.affectedRows > 0){
+  				resolve(1);
+	  		}else{
+	  			resolve(0);
+	  		}
+		});
+	})
+}
 
 let loginUser = async function(req, res){//token을 발급해준다 
 	signed_jwt = "empty";
 	var response =  verifyPassword(req.body.userID, req.body.userPassword).then(function(value){
 		if(value == 'success'){
 			findUserByID(req.body.userID, async function (error, userInfo, fields) {
-				if (error) throw error;
+				if (error) {
+					res.status(500).send(error);
+					console.log(error);
+					return;
+				}
 				if(userInfo.length > 0){
 					userInfo[0].password = undefined;
 					userInfo[0].num = undefined;
@@ -232,6 +253,16 @@ let loginUser = async function(req, res){//token을 발급해준다
 					}catch(error){
 						res.status(404).send(error);
 						return false;
+					}
+					if(req.body.token != undefined && req.body.token != null){
+						var tokenUpdateRes;
+						try{
+							tokenUpdateRes = await updateToken(req.body.userID, req.body.token);//푸쉬 토큰 업데이트 
+							userInfo[0].token = req.body.token;
+						}catch(error){
+							res.status(500).send(error);
+							return false;
+						}
 					}
 					if(signed_jwt == "empty") res.status(500).send("signing jwt error");
 					userInfo[0].jwt = signed_jwt;

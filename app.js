@@ -40,11 +40,11 @@ app.use(helmet());
 
 app.use('/api/user', userRouter);
 app.use('/api/auth', authRouter);
-app.use('/api/branch',branchRouter);
-app.use('/api/resources' ,resourcesRouter);
+app.use('/api/branch', checkJWT, branchRouter);
+app.use('/api/resources' , checkJWT, resourcesRouter);
 app.use('/api/reservation' , checkJWT,reservationRouter);
 app.use('/api/visit', checkJWT, visitRouter);
-//app.use('/api/branch' ,checkJWT,branchRouter);
+//app.use('/api/branch' ,c,branchRouter);
 
 
 app.listen(port, () => {

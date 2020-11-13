@@ -24,6 +24,18 @@ var check_jwt = function(req, res, next){
     		res.status(403).json({ error: err});
     		return;
     	}
+  //   	db.query(sql ,[decoded.userID, decoded.iat] , async function (error, results, fields) {
+		// 	if (error){
+		// 		res.status(403).json({ error: error});
+		// 	}
+
+		// 	if(results.length > 0){
+		//     	req.token_userID = decoded.userID;
+		// 		next();
+		// 	}else{
+		// 		res.status(403).json({ error: 'outdated crednetial' });
+		// 	}			
+		// });
     	console.log(decoded);
     	req.token_userID = decoded.userID;
     	next();

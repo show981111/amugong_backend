@@ -5,6 +5,7 @@ const app = express()
 const moment = require('moment');
 const TimeFilter = require('../model/TimeFilter.js')
 const sanitizeHtml = require('sanitize-html');
+const sendNotification = require('../utils/sendNotification.js')
 var schedule = require('node-schedule');
 var Promise = require('promise');
 
@@ -197,10 +198,16 @@ let isKingAvailable = function(req, res){
 	});
 }
 
+let sendNoti = function(req, res){
+	sendNotification(`e1H5d0bcxUg7qXqtCOCOpK:APA91bEIuXmiN-jU_0bl7qJp99ECKpLsRlw0QpUvg-u-qDY34yG6A8B1Q98PtSgUFUJ3jwZfoCUYRhnCjl8ka7p1R4SWGLXJofOHYiF_tHKvNs60CmnjoMxh_Zo-FWd_mOZY37F2naJ0`
+		, 'title', 'testingdasdasd');
+	res.status(200).send('dsadas');
+}
 
 
 module.exports = {
 	enter : enter,
 	exit : exit,
-	isKingAvailable : isKingAvailable
+	isKingAvailable : isKingAvailable,
+	sendNoti : sendNoti
 };
