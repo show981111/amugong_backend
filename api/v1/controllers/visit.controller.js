@@ -22,9 +22,15 @@ console.log('visit controller called');
 let enter = async function(req, res){
 	if(req.body.isKing == null|| req.body.num == null ||req.body.rsrv_startTime == null 
 		||req.body.rsrv_endTime == null ||req.body.purchasedAt == null || req.body.seatID == null
+		|| req.body.branchID == null || req.body.scanContent == null 
 		)
 	{
 		res.status(500).send("null is included");
+		return;
+	}
+
+	if(req.body.branchID != req.body.scanContent){
+		res.status(405).send("wrong branch");
 		return;
 	}
 
@@ -49,7 +55,7 @@ let enter = async function(req, res){
 
 			// 	if(results.length > 0){
 
-			var sql = `UPDATE RESERVATION SET real_start = ?, isKing = ? WHERE num = ? AND startTime = ? AND FK_RSRV_userID = ? AND real_start is NULL `;
+			var sql = `UPDATE RESERVATION SET real_start = ?, isKing = ? WHERE num = ? AND startTime = ? AND FK_RSRV_userID = ? AND (real_start is NULL OR real_start = 0)`;
 			var params = [visitStartTime,req.body.isKing, req.body.num,req.body.rsrv_startTime, req.token_userID];
 			db.query(sql, params, function(err, results){
 				if(err){
@@ -71,7 +77,7 @@ let enter = async function(req, res){
 					var enterCheckID = req.token_userID+req.body.seatID+req.body.purchasedAt+'enter';
 					var alarm_job = schedule.scheduledJobs[alarmID];
 					var enter_job = schedule.scheduledJobs[enterCheckID];
-					if(alarm_job != undefined) my_job.cancel();
+					if(alarm_job != undefined) alarm_job.cancel();
 					if(enter_job != undefined) enter_job.cancel();
 					//기존의 입장 전 알람과 입장 30분 뒤의 알림 삭제 
 
@@ -81,13 +87,17 @@ let enter = async function(req, res){
 						var gap = moment(alarmTime,"YYYY-MM-DD HH:mm").diff(moment(data.rsrv_endTime,"YYYY-MM-DD HH:mm"));
 						var d = moment.duration(gap);
 						var diff = d.asMinutes();
+						var message;
 						if(diff < 0){
+							message = '예약 종료' + (-diff) + '분 전 입니다!';
 							console.log(-diff,'분 전 입니다.');
-						}else{
+						}else{	
+							message = '예약 종료' + (diff) + '분 후 입니다!';
 							console.log(diff,'분 후 입니다.');
 						}
 						/////////////////////////////////////////////
 						///여기서 real_end 가 null 인지 체크하고 푸쉬 띄움 //
+						sendAlarmToExit(data.num, message);
 						/////////////////////////////////////////////
 						console.log('alarm Time ',alarmTime);
 						console.log('diff ',diff);
@@ -120,18 +130,25 @@ let enter = async function(req, res){
 
 
 let exit = function(req, res){
-	if(req.body.seatID == null || req.body.num == null || req.body.rsrv_endTime == null)
+	if(req.body.seatID == null || req.body.num == null || req.body.rsrv_endTime == null || 
+		req.body.branchID == null || req.body.scanContent == null )
 	{
 		res.status(400).send("null is included");
 		return;
 	}
+
+	if(req.body.branchID != req.body.scanContent){
+		res.status(405).send("wrong branch");
+		return;
+	}
+
 	var rsrv_endTime = moment(req.body.rsrv_endTime , 'YYYY-MM-DD HH:mm', true);
 	if(!moment(rsrv_endTime,'YYYY-MM-DD HH:mm').isValid()) {
 		res.status(400).send("format error");
 	}
 
 	var sql = `UPDATE RESERVATION SET real_end = ? WHERE num = ? AND endTime = ? AND FK_RSRV_userID = ?
-						AND FK_RSRV_seatID = ? AND real_end is NULL`;
+						AND FK_RSRV_seatID = ? AND (real_end is NULL OR real_end = 0)`;
 	var exitTime = moment().format('YYYY-MM-DD HH:mm');
 	var params = [exitTime, req.body.num, req.body.rsrv_endTime,req.token_userID, req.body.seatID];
 	db.query(sql, params, function(err, results){
@@ -194,6 +211,25 @@ let isKingAvailable = function(req, res){
 			res.status(403).send("occupied");
 		}else{
 			res.status(200).send("possible");
+		}
+	});
+}
+
+let sendAlarmToExit = function(num, message){
+	var sql = `SELECT user.token FROM amugong_db.RESERVATION rsrv
+				LEFT JOIN amugong_db.USER user ON rsrv.FK_RSRV_userID = user.userID
+			    WHERE rsrv.num = ? AND real_end is null`;
+	db.query(sql, [num], function(err, results){
+		if(err) { 
+			console.log(err);
+			return; 
+		};
+		console.log(results);
+		if(results.length > 0){
+			sendNotification(results[0]['token'], '예약시간 종료 알림', message);
+		}else{
+			var out_job = schedule.scheduledJobs[num+ "out"];
+			if(out_job != undefined) out_job.cancel();
 		}
 	});
 }

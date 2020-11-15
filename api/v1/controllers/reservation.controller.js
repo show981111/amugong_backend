@@ -6,6 +6,7 @@ const moment = require('moment');
 const TimeFilter = require('../model/TimeFilter.js')
 const sanitizeHtml = require('sanitize-html');
 var Promise = require('promise');
+const sendNotification = require('../utils/sendNotification.js')
 var schedule = require('node-schedule');
 
 
@@ -194,20 +195,47 @@ let reserveSeat = async function(req, res){//결제 시작하면 일단 예약 �
 			var params = [sanitizeHtml(req.token_userID), sanitizeHtml(data.seatID), sanitizeHtml(data.startTime)
 						, sanitizeHtml(data.endTime), purchasedAt];
 			db.query(sql, params, function(err, results){
-				if(err) {res.status(500).send(err);};
-
-				
-				//var checkPaymentID = req.token_userID+data.seatID+purchasedAt+'pay';//3분까지 결제 데드라인 
-				/////////////////////FCM TODO //////////////////////////
-				// var scheduleID = req.token_userID+data.seatID+purchasedAt+'alarm';//시작하기 5분 10분 전 알림 
-				/////////////////////FCM TODO //////////////////////////
-				var enterCheckID = req.token_userID+req.body.seatID+purchasedAt+'enter';//시작하고 나서 30분 뒤에도 안오면 취
+				if(err) {
+					res.status(500).send(err);
+					return;
+				};
 
 				var schedule_info = {
 					userID : req.token_userID,
 					seatID : req.body.seatID,
-					purchasedAt : purchasedAt
+					purchasedAt : purchasedAt,
+					startTime : data.startTime
 				};
+				//var checkPaymentID = req.token_userID+data.seatID+purchasedAt+'pay';//3분까지 결제 데드라인 
+				/////////////////////FCM TODO //////////////////////////
+				var fifBef = moment(data.startTime, 'YYYY-MM-DD HH:mm').subtract(15, 'minutes');
+				var alarmScheDuleID = req.token_userID+data.seatID+purchasedAt+'alarm';//시작하기 5분 10분 전 알림 
+
+				console.log('fifbefor', fifBef.toDate());
+				var dateTypeEndTime = moment(data.startTime, 'YYYY-MM-DD HH:mm').toDate();
+				console.log('end', dateTypeEndTime);
+
+				var rule = new schedule.RecurrenceRule();
+				rule.minute = new schedule.Range(0, 59, 5);
+				var enterRecurAlaram = schedule.scheduleJob(alarmScheDuleID, { start: fifBef.toDate(),end :dateTypeEndTime ,rule: rule }, function(data){
+					var alarmTime = moment().format('YYYY-MM-DD HH:mm');
+					var gap = moment(alarmTime,"YYYY-MM-DD HH:mm").diff(moment(data.startTime,"YYYY-MM-DD HH:mm"));
+					var d = moment.duration(gap);
+					var diff = d.asMinutes();
+					var message;
+					if(diff < 0){
+						message = '시작' + (-diff) + '분 전 입니다!';
+						console.log(-diff,'분 전 입니다.');
+					}else{	
+						message = '시작' + (diff) + '분 후 입니다!';
+						console.log(diff,'분 후 입니다.');
+					}
+					sendAlarmToEnter(data.userID, message);
+				}.bind(null,schedule_info));
+				/////////////////////FCM TODO //////////////////////////
+				var enterCheckID = req.token_userID+req.body.seatID+purchasedAt+'enter';//시작하고 나서 30분 뒤에도 안오면 취
+
+				
 
 				// var checkPaymentDeadLine = moment(purchasedAt,'YYYY-MM-DD HH:mm:ss').add(3, 'minutes');
 				// var paymentJob = schedule.scheduleJob(checkPaymentID , checkPaymentDeadLine.toDate(), function(data){
@@ -291,7 +319,9 @@ let deleteReservation = function(req, res){
 		// {
 		// 	startTime = moment(startTime).format('YYYY-MM-DD HH:mm');
 
-		var sql = "DELETE FROM RESERVATION WHERE num = ? AND FK_RSRV_userID = ? ";
+		// var sql = "DELETE FROM RESERVATION WHERE num = ? AND FK_RSRV_userID = ? AND (real_start is null OR real_start = 0)";
+		var sql = "UPDATE RESERVATION SET status = '0' WHERE num = ? AND FK_RSRV_userID = ? AND (real_start is null OR real_start = 0)";
+
 		db.query(sql, [num, userID], function(err, results){
 			if(err) {
 				res.status(500).send(err);
@@ -324,19 +354,19 @@ let getMyReservation = function(req, res){
 		var curMonth = moment(curTerm).format('MM');
 		var curYear = moment(curTerm).format('YYYY');
 		var sql;
-		if(req.params.option = 'unused'){
+		if(req.params.option == 'unused'){
 			sql = `SELECT rsrv.num, rsrv.FK_RSRV_userID,rsrv.FK_RSRV_seatID , DATE_FORMAT(rsrv.startTime, '%Y-%m-%d %H:%i') AS startTime, DATE_FORMAT(rsrv.endTime, '%Y-%m-%d %H:%i') AS endTime,
 				DATE_FORMAT(rsrv.real_start, '%Y-%m-%d %H:%i') AS real_start, DATE_FORMAT(rsrv.real_end, '%Y-%m-%d %H:%i') AS real_end,
-				DATE_FORMAT(rsrv.purchasedAt, '%Y-%m-%d %H:%i:%s') AS purchasedAt, rsrv.isKing, rsrv.merchant_uid, rsrv.status, rsrv.isPaid ,seat.FK_SEAT_branchID, br.branchName, seat.seatIndex
+				DATE_FORMAT(rsrv.purchasedAt, '%Y-%m-%d %H:%i:%s') AS purchasedAt, rsrv.isKing, rsrv.merchant_uid, rsrv.status, rsrv.isPaid ,seat.FK_SEAT_branchID, br.branchName, seat.seatIndex, rsrv.price
 				FROM amugong_db.RESERVATION rsrv LEFT JOIN amugong_db.SEAT seat
 		        ON rsrv.FK_RSRV_seatID = seat.seatID LEFT JOIN amugong_db.BRANCH br
 		        ON seat.FK_SEAT_branchID =  br.branchID
 		        WHERE MONTH(startTime) = ? AND YEAR(startTime) = ? AND (rsrv.real_end is null OR rsrv.real_end = 0) AND 
-				FK_RSRV_userID = ? order by rsrv.startTime DESC`;
+				FK_RSRV_userID = ? AND rsrv.status = '1' order by rsrv.startTime DESC`;
 		}else{
 			sql = `SELECT rsrv.num, rsrv.FK_RSRV_userID,rsrv.FK_RSRV_seatID , DATE_FORMAT(rsrv.startTime, '%Y-%m-%d %H:%i') AS startTime, DATE_FORMAT(rsrv.endTime, '%Y-%m-%d %H:%i') AS endTime,
 				DATE_FORMAT(rsrv.real_start, '%Y-%m-%d %H:%i') AS real_start, DATE_FORMAT(rsrv.real_end, '%Y-%m-%d %H:%i') AS real_end,
-				DATE_FORMAT(rsrv.purchasedAt, '%Y-%m-%d %H:%i:%s') AS purchasedAt, rsrv.isKing, rsrv.merchant_uid, rsrv.status, rsrv.isPaid ,seat.FK_SEAT_branchID, br.branchName, seat.seatIndex
+				DATE_FORMAT(rsrv.purchasedAt, '%Y-%m-%d %H:%i:%s') AS purchasedAt, rsrv.isKing, rsrv.merchant_uid, rsrv.status, rsrv.isPaid ,seat.FK_SEAT_branchID, br.branchName, seat.seatIndex, rsrv.price
 				FROM amugong_db.RESERVATION rsrv LEFT JOIN amugong_db.SEAT seat
 		        ON rsrv.FK_RSRV_seatID = seat.seatID LEFT JOIN amugong_db.BRANCH br
 		        ON seat.FK_SEAT_branchID =  br.branchID
@@ -411,7 +441,26 @@ let extendReservation = function(req, res){
 		res.status(500).send("not enough data");
 	}
 };
+let sendAlarmToEnter = function(userID, message){
+	var sql = `SELECT token FROM amugong_db.USER WHERE userID = ?`;
+	db.query(sql, [userID], function(err, results){
+		if(err) { 
+			console.log(err);
+			return; 
+		};
+		console.log(results);
+		if(results.length > 0){
+			sendNotification(results[0]['token'], '입장 전 알림', message);
+		}else{
+			
+		}
+	});
+}
 
+let testSend = function(req, res){
+	sendAlarmToEnter('01011112222', 'teset bro');
+	res.status(200).send('ass');
+}
 
 module.exports = {
 	checkFilterInput : checkFilterInput,
@@ -420,5 +469,6 @@ module.exports = {
 	deleteReservation : deleteReservation,
 	getMyReservation : getMyReservation,
 	extendReservation : extendReservation,
-	updatePaidStatus : updatePaidStatus
+	updatePaidStatus : updatePaidStatus,
+	testSend : testSend
 };

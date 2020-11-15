@@ -1,14 +1,15 @@
 const express = require('express')
 const bodyParser = require('body-parser')
 var router = express.Router()
+var checkJWT = require('../middleware/check_jwt.js');
 const mapController = require('../controllers/map.controller.js');
 
 
 router.use(bodyParser.urlencoded({extended:false}))
 router.use(bodyParser.json())
 
-router.get('/:lat/:long',mapController.showMap)
-router.get('/:lat/:long/:startDateTime/:endDateTime',mapController.showMap)
+router.get('/:lat/:long',checkJWT ,mapController.showMap)
+router.get('/:lat/:long/:startDateTime/:endDateTime',checkJWT,mapController.showMap)
 router.get('/branch/:lat/:long',mapController.showBranchLocationMap)
 
 /**

@@ -74,7 +74,10 @@ let getImageKeyList = function(req, res){
         for(var i = 0; i < data.Contents.length; i++){
           console.log(data.Contents[i].Key);
           var splits = data.Contents[i].Key.split('/');
-          keys.push(splits[splits.length -1 ])
+          if(splits[splits.length -1 ] != null && splits[splits.length -1 ] != '' )
+          {
+            keys.push(splits[splits.length -1 ]);
+          }
         }
         
         res.status(200).send(keys);

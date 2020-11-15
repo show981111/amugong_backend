@@ -33,13 +33,13 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
-// app.use('/api/map', checkJWT ,mapRouter);
 app.use('/api/map' ,mapRouter);
 app.use(helmet());
 
 
 app.use('/api/user', userRouter);
 app.use('/api/auth', authRouter);
+// app.use('/api/map' , mapRouter);
 app.use('/api/branch', checkJWT, branchRouter);
 app.use('/api/resources' , checkJWT, resourcesRouter);
 app.use('/api/reservation' , checkJWT,reservationRouter);

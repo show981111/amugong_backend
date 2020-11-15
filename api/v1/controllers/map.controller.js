@@ -20,9 +20,14 @@ console.log('map controller called');
 var showMap = async function(req,res){
 	
 	var token = req.headers.authorization;
-	var token  = "not";
-	//token = token.slice(7, token.length).trimLeft();
-
+	// token = 'not';
+	if(token == null && token.length < 8) {
+		res.status(403).json({ error: err});
+		return;
+	}
+	token = token.slice(7, token.length).trimLeft();
+	console.log('token in show map');
+	console.log(req.headers.authorization);
 	var lat = req.params.lat;
 	var long = req.params.long;
 	var startDateTime = req.params.startDateTime;
