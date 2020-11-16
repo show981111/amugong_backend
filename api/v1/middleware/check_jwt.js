@@ -2,6 +2,7 @@ const jwt = require('jsonwebtoken');
 const express = require('express')
 const app = express();
 const jwt_config  = require('../config/db-jwt-config.json');
+const db = require('../model/db_connection.js')
 
 const secret_key = jwt_config.secret_key;
 
@@ -17,28 +18,27 @@ var check_jwt = function(req, res, next){
 	var token = req.headers.authorization;
 	token = token.slice(7, token.length).trimLeft();
 	
-	console.log(token);
-
     jwt.verify(token, secret_key, function(err, decoded) {
     	if(err){
-    		res.status(403).json({ error: err});
-    		return;
+    		return res.status(403).json({ error: err});
     	}
-  //   	db.query(sql ,[decoded.userID, decoded.iat] , async function (error, results, fields) {
-		// 	if (error){
-		// 		res.status(403).json({ error: error});
-		// 	}
+    	var sql = 'SELECT userID, name FROM USER WHERE userID = ? AND issuedAt = ?';
 
-		// 	if(results.length > 0){
-		//     	req.token_userID = decoded.userID;
-		// 		next();
-		// 	}else{
-		// 		res.status(403).json({ error: 'outdated crednetial' });
-		// 	}			
-		// });
-    	console.log(decoded);
-    	req.token_userID = decoded.userID;
-    	next();
+    	db.query(sql ,[decoded.userID, decoded.iat] , async function (error, results, fields) {
+			if (error){
+				return res.status(403).json({ error: error});
+			}
+
+			if(results.length > 0){
+		    	req.token_userID = decoded.userID;
+				next();
+			}else{
+				return res.status(403).json({ error: 'outdated crednetial' });
+			}			
+		});
+    	// console.log(decoded);
+    	// req.token_userID = decoded.userID;
+    	// next();
 	});
 
 }
