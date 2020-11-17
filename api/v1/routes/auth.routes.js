@@ -38,7 +38,9 @@ router.use(bodyParser.json())
  *       500:
  *         description : "DB 통신 오류 또는 카카오 메세지 전달 실패"
  */
-router.post('/phone', authController.checkPhoneInput, authController.sendAuthLink)//해당 전화번호로 jwt 만들어서 링크 보냄 
+router.post('/phone', authController.checkPhoneInput, authController.sendAuthCode)//해당 전화번호로 인증 코드 보냄
+
+router.post('/phone/verify', authController.checkPhoneInput, authController.verify_code)//전화번호 인증번호 확인 
 
 router.get('/phone/verify/:token', authController.verify_token)//토큰받아서 그 토큰 안에 전화번호는 TEMP verify 시킴
 /**

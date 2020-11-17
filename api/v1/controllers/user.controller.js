@@ -91,7 +91,7 @@ let isVerified = function(userID){
 				var current_time = moment().unix()
 
 				console.log(current_time - results[0].issuedAt );
-				if(results[0].isVerified == 1 && current_time - results[0].issuedAt < 180 ){
+				if(results[0].isVerified == 1 && current_time - results[0].issuedAt < 300 ){
 					resolve("verified")
 				}else{
 					reject("Forbidden");

@@ -20,7 +20,7 @@ let getBranchList = function(req, res){//lat 이랑 long 만 가지고 branch �
 	
 	//var sql = 'SELECT * FROM BRANCH';
 
-	var sql = `SELECT br.* , DATE_FORMAT(bh.businessHourStart, '%H:%i') AS businessHourStart, 
+	var sql = `SELECT br.* ,DATE_FORMAT(bh.businessHourStart, '%H:%i') AS businessHourStart, 
 				DATE_FORMAT(bh.businessHourEnd, '%H:%i') AS businessHourEnd, bh.dow
 				FROM amugong_db.BRANCH br
  				LEFT JOIN amugong_db.BUSINESSHOUR bh ON br.branchID = bh.FK_BHOUR_branchID order by br.branchID`;
@@ -139,6 +139,7 @@ let makeBranchJsonOb = function(sql,params){
 					jsonOb.branchIntro = results[i].branchIntro;
 					jsonOb.totalSeat = results[i].totalSeat;
 					jsonOb.curNum = results[i].curNum;
+					jsonOb.price = results[i].price;
 					jsonOb.atmosphere = results[i].atmosphere;
 					jsonOb.music = results[i].music;
 					jsonOb.light = results[i].light;

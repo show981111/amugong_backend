@@ -63,15 +63,15 @@ let getSeatStateList = async function(req, res){//change needed
 		 	 DATE_FORMAT(rsrv.real_end, '%Y-%m-%d %H:%i') AS real_end, rsrv.FK_RSRV_userID , rsrv.num, seat.plug, seat.seatIndex
 		 	 FROM amugong_db.SEAT seat
 			LEFT JOIN amugong_db.RESERVATION AS rsrv ON 
-			((STR_TO_DATE(?,'%Y-%m-%d %H:%i') <= rsrv.startTime AND
-			 rsrv.startTime < STR_TO_DATE(? ,'%Y-%m-%d %H:%i')) OR 
-			(STR_TO_DATE(?,'%Y-%m-%d %H:%i') < rsrv.endTime AND 
-			rsrv.endTime <= STR_TO_DATE(?,'%Y-%m-%d %H:%i')) )
+			( rsrv.startTime <= (STR_TO_DATE(?,'%Y-%m-%d %H:%i') AND
+			 rsrv.endTime > STR_TO_DATE(? ,'%Y-%m-%d %H:%i')) OR 
+			( rsrv.startTime < STR_TO_DATE(?,'%Y-%m-%d %H:%i') AND 
+			rsrv.endTime >= STR_TO_DATE(?,'%Y-%m-%d %H:%i')) )
 		    AND (rsrv.FK_RSRV_seatID = seat.seatID ) AND (real_end is NULL OR real_end = 0)
 	        AND rsrv.status = '1'
 		    WHERE seat.FK_SEAT_branchID = ? order by seat.seatID`;
 	    //현재 사용중인 자리를 보여줌.  real_end !=NULL 이라면 무조건 사용 가능! 
-	db.query(sql,[startDateTime, endDateTime,startDateTime, endDateTime,id ] ,function(err, results){
+	db.query(sql,[startDateTime, startDateTime,endDateTime, endDateTime,id ] ,function(err, results){
 		if(err) {
 			res.status(500).send(err);
 			return;
@@ -190,10 +190,10 @@ let reserveSeat = async function(req, res){//결제 시작하면 일단 예약 �
 			return false;
 		}
 		if(redunt == 0){
-			var sql = `INSERT INTO RESERVATION(FK_RSRV_userID, FK_RSRV_seatID, startTime, endTime, purchasedAt)
-						VALUES(?,?,?,?,?)`;
+			var sql = `INSERT INTO RESERVATION(FK_RSRV_userID, FK_RSRV_seatID, startTime, endTime, purchasedAt, price)
+						VALUES(?,?,?,?,?,?)`;
 			var params = [sanitizeHtml(req.token_userID), sanitizeHtml(data.seatID), sanitizeHtml(data.startTime)
-						, sanitizeHtml(data.endTime), purchasedAt];
+						, sanitizeHtml(data.endTime), purchasedAt, sanitizeHtml(data.price)];
 			db.query(sql, params, function(err, results){
 				if(err) {
 					res.status(500).send(err);
@@ -318,11 +318,12 @@ let deleteReservation = function(req, res){
 		// if(moment(startTime, 'YYYY-MM-DD HH:mm').isValid())
 		// {
 		// 	startTime = moment(startTime).format('YYYY-MM-DD HH:mm');
-
+		var cur = moment().format('YYYY-MM-DD HH:mm');
 		// var sql = "DELETE FROM RESERVATION WHERE num = ? AND FK_RSRV_userID = ? AND (real_start is null OR real_start = 0)";
-		var sql = "UPDATE RESERVATION SET status = '0' WHERE num = ? AND FK_RSRV_userID = ? AND (real_start is null OR real_start = 0)";
+		var sql = `UPDATE RESERVATION SET status = '0' WHERE num = ? AND FK_RSRV_userID = ? AND (real_start is null OR real_start = 0) 
+					AND startTime > ADDTIME(?, -3000)`;
 
-		db.query(sql, [num, userID], function(err, results){
+		db.query(sql, [num, userID, cur], function(err, results){
 			if(err) {
 				res.status(500).send(err);
 				return;

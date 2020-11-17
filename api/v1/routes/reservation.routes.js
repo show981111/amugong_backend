@@ -9,7 +9,7 @@ router.use(bodyParser.json())
 
 router.get('/:term/:option', reservationController.getMyReservation);
 router.get('/seat/:branchID/:startTime/:endTime', reservationController.checkFilterInput, reservationController.getSeatStateList);
-router.delete('/:num', reservationController.deleteReservation);
+router.put('/:num', reservationController.deleteReservation);
 router.post('/seat', reservationController.reserveSeat);
 router.post('/seat/test', reservationController.testSend);
 // router.put('/extend/', reservationController.extendReservation);
