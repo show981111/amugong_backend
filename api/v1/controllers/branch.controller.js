@@ -1,8 +1,6 @@
-const express = require('express')
 const db = require('../model/db_connection.js')
 const TimeFilter = require('../model/TimeFilter.js')
 const bodyParser = require('body-parser')
-const app = express()
 const moment = require('moment');
 
 var Promise = require('promise');
@@ -10,9 +8,6 @@ var Promise = require('promise');
 
 require('moment-timezone'); 
 moment.tz.setDefault("Asia/Seoul");
-
-app.use(bodyParser.urlencoded({extended:false}))
-app.use(bodyParser.json())
 
 console.log('Branch controller called');
 

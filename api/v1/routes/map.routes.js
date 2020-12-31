@@ -9,6 +9,7 @@ router.use(bodyParser.urlencoded({extended:false}))
 router.use(bodyParser.json())
 
 router.get('/:lat/:long',checkJWT ,mapController.showMap)
+router.get('/',checkJWT ,mapController.showMap)
 router.get('/:lat/:long/:startDateTime/:endDateTime',checkJWT,mapController.showMap)
 router.get('/branch/:lat/:long',mapController.showBranchLocationMap)
 

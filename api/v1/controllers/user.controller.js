@@ -1,8 +1,5 @@
-const express = require('express')
 const db = require('../model/db_connection.js')
 const User = require('../model/user.model.js')
-const bodyParser = require('body-parser')
-const app = express()
 const crypto = require('crypto');
 const moment = require('moment');
 const jwt = require('jsonwebtoken');
@@ -17,8 +14,6 @@ var Promise = require('promise');
 require('moment-timezone'); 
 moment.tz.setDefault("Asia/Seoul");
 
-app.use(bodyParser.urlencoded({extended:false}))
-app.use(bodyParser.json())
 
 console.log('controller called');
 

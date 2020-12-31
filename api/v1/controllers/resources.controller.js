@@ -1,7 +1,4 @@
-const express = require('express')
 const db = require('../model/db_connection.js')
-const bodyParser = require('body-parser')
-const app = express()
 const moment = require('moment');
 var Promise = require('promise');
 
@@ -19,8 +16,6 @@ const IAM_USER_SECRET = s3_config.IAM_USER_SECRET;
 require('moment-timezone'); 
 moment.tz.setDefault("Asia/Seoul");
 
-app.use(bodyParser.urlencoded({extended:false}))
-app.use(bodyParser.json())
 
 AWS.config.update({
     secretAccessKey: IAM_USER_SECRET,

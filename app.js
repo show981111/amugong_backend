@@ -29,6 +29,9 @@ const swaggerOptions = {
 	},
 	apis : ["./api/v1/routes/*.js"]
 };
+app.use(bodyParser.urlencoded({extended:false}))
+app.use(bodyParser.json())
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 const swaggerDocs = swaggerJsDoc(swaggerOptions);

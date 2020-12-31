@@ -18,8 +18,8 @@
 	// var markers = []; 
 	// var markerListener; 
 	// var branchList;
-	var defaultLat = 37;
-	var defaultLong = 127;
+	var defaultLat = 37.45180970;
+	var defaultLong = 126.65510647;
 
 	var markers = new Object();
 	var markerListener = new Object();
@@ -100,8 +100,6 @@
 	var user_marker = new naver.maps.Marker(markerOptions);
 
 	function setCurrentLocation(lat, long) {
-		firstLat = lat;
-		firstLong = long;
 		Print.postMessage('set location called' + lat + " / " + long);
 		var new_position = new naver.maps.LatLng(lat, long);
     	user_marker.setPosition(new_position);

@@ -1,8 +1,5 @@
-const express = require('express')
 const db = require('../model/db_connection.js')
 const User = require('../model/user.model.js')
-const bodyParser = require('body-parser')
-const app = express()
 const moment = require('moment');
 const jwt = require('jsonwebtoken');
 const smtp_config  = require('../config/smtp.json');
@@ -24,8 +21,6 @@ var Promise = require('promise');
 require('moment-timezone'); 
 moment.tz.setDefault("Asia/Seoul");
 
-app.use(bodyParser.urlencoded({extended:false}))
-app.use(bodyParser.json())
 
 var checkPhoneInput =  function(req,res,next){
 	var data;

@@ -1,7 +1,4 @@
-const express = require('express')
 const db = require('../model/db_connection.js')
-const bodyParser = require('body-parser')
-const app = express()
 const moment = require('moment');
 const TimeFilter = require('../model/TimeFilter.js')
 const sanitizeHtml = require('sanitize-html');
@@ -12,9 +9,6 @@ var Promise = require('promise');
 
 require('moment-timezone'); 
 moment.tz.setDefault("Asia/Seoul");
-
-app.use(bodyParser.urlencoded({extended:false}))
-app.use(bodyParser.json())
 
 console.log('visit controller called');
 
